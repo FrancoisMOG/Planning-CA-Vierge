@@ -1,0 +1,2425 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planning et CA</title>
+<style>
+:root{
+  --bg:#f3f5f6; --panel:#fff; --ink:#15222b; --muted:#5c6b75; --line:#d5dde2; --soft:#eef2f4; --cell:#f6f8f9;
+  --ses:#0f766e; --sesf:#d5eae7; --app:#c2410c; --appf:#f7dccf; --new:#1d4ed8; --newf:#dce6f7; --neu:#8a99a3; --neuf:#e6e9ec; --fp:#7c3aed; --fpf:#ece4fb; --fpi:#be185d; --fpif:#fbe0ec;
+  --err:#b91c1c; --errf:#fdecec; --ok:#15803d;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",Calibri,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--new);outline-offset:2px}
+
+/* Barre du haut */
+.top{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top-in{max-width:1500px;margin:0 auto;padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.brand{font-weight:700;font-size:16px;margin-right:6px}
+.brand small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:7px 14px;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 12px}
+.btn:hover{background:var(--soft)}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.primary:hover{background:#2b3a44}
+.btn.danger{color:var(--err);border-color:#f0c9c9}
+.btn.danger.armed{background:var(--err);color:#fff;border-color:var(--err)}
+.btn.small{padding:4px 9px;font-size:13px}
+.status{font-size:12px;color:var(--muted);min-width:120px}
+.status.ok{color:var(--ok)}
+
+main{max-width:1500px;margin:0 auto;padding:18px 16px 60px}
+.view[hidden]{display:none!important}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px;margin-bottom:22px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:24px;margin:4px 0 4px}
+h2{font-size:18px;margin:0 0 10px}
+.lead{color:var(--muted);margin:0 0 14px}
+.lead b{color:var(--ink)}
+
+/* Tableau CA */
+.scroll{overflow-x:auto}
+table.ca{border-collapse:collapse;width:100%;min-width:1180px;table-layout:fixed}
+table.ca th,table.ca td{border:1px solid var(--line);padding:5px 6px;vertical-align:middle}
+table.ca thead th{background:var(--soft);font-size:11.5px;color:var(--muted);font-weight:600}
+table.ca th.m{text-align:center}
+table.ca .num{text-align:right;font-variant-numeric:tabular-nums}
+table.ca .money{background:var(--cell)}
+table.ca .grp td{border-left:0;border-right:0;background:transparent;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding-top:12px}
+.fname{font-weight:700;font-size:13px}
+.fsub{font-size:11px;color:var(--muted)}
+.big{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.tiny{font-size:10.5px;color:var(--muted);line-height:1.3}
+td.mc{font-size:10.5px;font-weight:700;text-align:center;line-height:1.2;padding:3px 2px!important}
+td.cur-a{background:var(--sesf);color:var(--ses)}
+td.cur-p{background:var(--appf);color:var(--app)}
+td.cur-n{background:var(--neuf);color:var(--muted)}
+td.cur-f{background:var(--fpf);color:var(--fp)}
+td.cur-i{background:var(--fpif);color:var(--fpi)}
+td.nw{background:var(--newf);color:var(--new)}
+tr.neutral .fname,tr.neutral .big{color:var(--muted)}
+tr.tot td{background:var(--soft);font-weight:700}
+tr.tot.grand td{font-size:16px}
+.warn{color:var(--err);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.note{font-size:11.5px;color:var(--muted);font-style:italic;margin:6px 0 0}
+
+/* Qui finit quand */
+table.qf{border-collapse:collapse;width:100%}
+table.qf th{background:var(--soft);text-align:left;font-size:12px;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line)}
+table.qf td{padding:7px 8px;vertical-align:top}
+table.qf tr.first td{border-top:1.5px solid #8a99a3}
+.qd{font-weight:700;font-size:15px}
+.chip{display:inline-block;background:var(--soft);border-radius:4px;padding:1px 7px;margin:2px 4px 2px 0;font-size:13px}
+.chip small{color:var(--muted);font-size:10.5px;margin-left:4px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+ul.hors{margin:4px 0 0;padding-left:20px;color:var(--muted)}
+
+/* Édition */
+.edit-intro{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:12px}
+.card>summary{list-style:none;cursor:pointer;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.card>summary::-webkit-details-marker{display:none}
+.card>summary::before{content:"▸";color:var(--muted);transition:transform .15s}
+.card[open]>summary::before{transform:rotate(90deg)}
+.card .ct{font-weight:700}
+.card .cs{color:var(--muted);font-size:13px}
+.card .cr{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums}
+.card .body{padding:4px 16px 16px;border-top:1px solid var(--soft)}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 14px;margin-top:10px}
+.f{display:grid;gap:3px;align-content:start}
+.f label{font-size:12px;color:var(--muted)}
+.f input,.f select,.f textarea{border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;width:100%}
+.f input[aria-invalid="true"]{border-color:var(--err);background:var(--errf)}
+.f .msg{font-size:11.5px;color:var(--err);min-height:0}
+.f .hint{font-size:11.5px;color:var(--muted)}
+.f.wide{grid-column:1/-1}
+.f.wide2{grid-column:span 2}
+@media (max-width:600px){.f.wide2{grid-column:1/-1}}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:18px}
+.sub{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:16px 0 4px}
+table.ap{border-collapse:collapse;width:100%;min-width:760px}
+table.ap th{font-size:12px;color:var(--muted);text-align:left;font-weight:600;padding:4px 6px}
+table.ap td{padding:3px 4px}
+table.ap input{border:1px solid var(--line);border-radius:6px;padding:5px 7px;width:100%;background:#fff}
+table.ap input[aria-invalid="true"]{border-color:var(--err);background:var(--errf)}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.sect-title{display:flex;align-items:center;gap:12px;margin:22px 0 10px}
+.sect-title h2{margin:0}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+.ca-head{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between}
+.ca-head .seg button{font-size:13px;padding:6px 12px}
+.reps{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px 24px;margin-top:14px}
+table.rep{border-collapse:collapse;width:100%;font-size:12.5px}
+table.rep th{text-align:left;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:4px 6px}
+table.rep td{border-bottom:1px solid var(--soft);padding:4px 6px}
+table.rep .num{text-align:right;font-variant-numeric:tabular-nums}
+.banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--newf);border:1px solid #b9cbee;border-radius:8px;padding:10px 14px;margin-bottom:12px}
+.pers{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-top:12px}
+.per{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--cell)}
+.per-t{font-weight:700;font-size:13px}
+.per .fields{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-top:6px}
+.sub.f{margin-bottom:-4px}
+.btn.save{background:#15803d;border-color:#15803d;color:#fff}
+.btn.save:hover{background:#166534}
+.preview{margin:10px 0 4px;border:1px dashed var(--line);border-radius:8px;padding:8px 10px;background:var(--cell)}
+.pv-t{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+table.ca.mini{min-width:980px}
+table.ca.mini th,table.ca.mini td{padding:3px 5px}
+.per.ref{margin-top:12px;background:#fff}
+
+/* Éditeur : liste à gauche, fiche à droite */
+.ed{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}
+.ed-side{position:sticky;top:70px;max-height:calc(100vh - 86px);overflow:auto;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding-bottom:10px}
+.ed-tools{display:grid;gap:8px}
+.ed-tools .btn.save{width:100%;padding:10px 12px;font-weight:600}
+.ed-tools2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ed-g{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ed-gh{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--line);background:var(--soft)}
+.ed-g.ga .ed-gh{color:var(--ses)} .ed-g.gp .ed-gh{color:var(--app)} .ed-g.gf .ed-gh{color:var(--fp)} .ed-g.gi .ed-gh{color:var(--fpi)}
+.ed-gh .btn{text-transform:none;letter-spacing:0;font-weight:500;padding:3px 8px;font-size:12px}
+.ed-row{display:flex;align-items:stretch;border-bottom:1px solid var(--soft)}
+.ed-row:last-child{border-bottom:0}
+.ed-row .ed-item{border-bottom:0;flex:1;min-width:0}
+.ed-del{border:0;border-left:1px solid var(--soft);background:transparent;color:var(--err);font-size:11px;padding:0 8px;opacity:.55}
+.ed-row:hover .ed-del,.ed-row.on .ed-del,.ed-del:focus-visible{opacity:1}
+.ed-del:hover{background:var(--errf)}
+.ed-del.armed{background:var(--err);color:#fff;opacity:1}
+.kpi-del{display:flex;align-items:center}
+.ed-item{display:grid;grid-template-columns:1fr auto;gap:0 8px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--soft);background:transparent;padding:8px 10px;border-left:3px solid transparent}
+.ed-item:last-child{border-bottom:0}
+.ed-item:hover{background:var(--cell)}
+.ed-item.on{background:#eef4ff;border-left-color:var(--new)}
+.ei-n{font-weight:600;font-size:13px;grid-column:1}
+.ei-s{font-size:11px;color:var(--muted);grid-column:1}
+.ei-v{grid-column:2;grid-row:1/3;align-self:center;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ed-reset{text-align:center}
+.ed-side .banner{display:grid;gap:6px;margin:0;font-size:12.5px}
+.ed-main{min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.ed-head{display:flex;flex-wrap:wrap;gap:14px 24px;justify-content:space-between;align-items:flex-end;background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--c,var(--ink));border-radius:10px;padding:14px 18px}
+.ed-head h2{margin:2px 0;font-size:22px}
+.ed-kpi{display:flex;gap:10px;flex-wrap:wrap}
+.kpi{display:grid;gap:2px;background:var(--cell);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:150px}
+.kpi span{font-size:11px;color:var(--muted)}
+.kpi b{font-size:20px;font-variant-numeric:tabular-nums}
+.kpi.s{min-width:170px}.kpi.s b{font-size:18px}
+.kpi.tot{background:#eef4ff;border-color:#b9cbee}
+.kpi small{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ed-main .preview{margin:0;background:var(--panel)}
+.ed-nav{display:flex;flex-wrap:wrap;gap:6px;position:sticky;top:62px;z-index:2;background:var(--bg);padding:6px 0}
+.ed-nav a{font-size:12.5px;text-decoration:none;color:var(--ink);border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 12px}
+.ed-nav a:hover{background:var(--soft)}
+.sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;scroll-margin-top:110px}
+.sec h3{margin:0 0 4px;font-size:15px}
+.sec-n{margin:0 0 6px;font-size:12px;color:var(--muted)}
+.chks{display:flex;flex-wrap:wrap;gap:4px 24px}
+.dur-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:8px}
+.dur{border:1px solid var(--line);border-radius:8px;padding:8px 12px 4px}
+.dur.c{background:var(--sesf);border-color:#b7dcd6}
+.dur.e{background:#fdf1e7;border-color:#f3d2b6}
+.dur.t{background:var(--cell)}
+.dur-v{font-size:20px;font-weight:700;padding:4px 0}
+table.plan{border-collapse:collapse;width:100%;min-width:900px;margin-top:4px}
+table.plan th{font-size:11.5px;color:var(--muted);font-weight:600;padding:4px;text-align:center}
+table.plan tbody th{text-align:left;font-size:12.5px;color:var(--ink);white-space:nowrap;padding-right:8px}
+table.plan td{padding:2px}
+table.plan input{width:100%;border:1px solid var(--line);border-radius:5px;padding:5px 4px;text-align:center;background:#fff;font-variant-numeric:tabular-nums}
+table.plan tr.rc input{background:#f2faf8}
+table.plan tr.re input{background:#fff8f2}
+table.plan input[aria-invalid="true"]{border-color:var(--err);background:var(--errf)}
+table.plan .sep{border-left:2px dashed #9fb5e6}
+.per.bdcid{margin-top:12px;background:var(--cell)}
+.per.bdcid .fields{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.yr-tabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.yr{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:8px 22px;font-size:15px;font-weight:700}
+.yr.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.ca26{background:var(--cell);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:6px 0 10px}
+table.ap.ro td{padding:5px 6px;border-bottom:1px solid var(--soft);font-size:13px}
+table.ap.ro .num{text-align:right;font-variant-numeric:tabular-nums}
+.kpi.k26{background:#fffaf0;border-color:#ecdcb8}
+.zone{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:8px}
+.zone.zc{background:#f2faf8;border-color:#b7dcd6}
+.zone.zr{background:#f3f7ff;border-color:#c9d8f5}
+.zone.off .fields{opacity:.55}
+.zres{margin-top:10px;padding:8px 10px;background:var(--panel);border:1px solid var(--line);border-radius:8px;font-size:13px}
+.plan-btns{display:flex;flex-wrap:wrap;gap:6px}
+.plan-ecart:empty{display:none}
+.plan-ecart{margin-top:6px}
+table.plan tr.rt td,table.plan tr.rt th{border-top:1px solid var(--line);padding-top:5px;font-variant-numeric:tabular-nums}
+table.plan tr.rt td{text-align:center;font-size:12.5px;color:var(--muted)}
+table.plan td.num{text-align:right;padding:0 6px;white-space:nowrap}
+.plan-foot{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px}
+.per.p2{background:#f3f7ff;border-color:#c9d8f5}
+.ed-danger{text-align:right}
+@media (max-width:900px){
+  .ed{grid-template-columns:minmax(0,1fr)}
+  .ed-side{position:static;max-height:none}
+  .ed-nav{top:0}
+}
+.errbox{background:var(--errf);color:var(--err);border:1px solid #f0c9c9;border-radius:8px;padding:10px 14px;margin-bottom:14px}
+
+/* CA global */
+.g-kpis{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 16px}
+.g-kpis .kpi{flex:1 1 180px}
+.g-kpis .kpi.tot{background:#eef7f1;border-color:#b9dcc6}
+table.gt{border-collapse:collapse;width:100%;font-size:13px}
+table.gt th{text-align:right;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:6px 8px;white-space:nowrap}
+table.gt th:first-child,table.gt td:first-child{text-align:left}
+table.gt td{border-bottom:1px solid var(--soft);padding:5px 8px;vertical-align:top;text-align:right;font-variant-numeric:tabular-nums}
+table.gt tr.tot td{font-weight:700;border-top:2px solid var(--line);background:var(--cell)}
+table.gt th.gl,table.gt td.gl{background:#f6faf7}
+table.gt .gsub{display:block;font-size:11px;line-height:1.3;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0}
+table.gt td.neu{color:var(--muted)}
+.g-h2{margin:22px 0 8px;font-size:16px}
+/* Accueil */
+.seg[hidden]{display:none}
+.seg button:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
+.intro{max-width:980px;margin:0 auto 22px}
+.intro h1{font-size:26px}
+.intro-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.yr-edit{display:flex;gap:8px;align-items:center;margin:8px 0 4px}
+.yr-edit input{width:110px;text-align:center;font-size:22px;font-weight:700;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-variant-numeric:tabular-nums}
+.yr-edit .btn{font-size:18px;padding:6px 14px}
+.intro .msg{font-size:12px;color:var(--err);min-height:0}
+.intro .f input{border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;margin-top:4px}
+.et-list{list-style:none;margin:10px 0;padding:0;display:grid;gap:8px}
+.et-row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--cell)}
+.et-n{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+.et-in{flex:1 1 220px;min-width:0;border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-weight:600;background:#fff}
+.et-s{font-size:12px;color:var(--muted);white-space:nowrap}
+.et-b{display:flex;gap:6px;flex-wrap:wrap}
+.et-add{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.et-add input{flex:1 1 240px;min-width:0;border:1px dashed #9fb5e6;border-radius:8px;padding:8px 10px;background:#fff}
+.intro-go{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:16px}
+.intro-go .btn.save{padding:11px 22px;font-size:15px;font-weight:600}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+
+/* Impression A3 paysage */
+@page{size:A3 landscape;margin:10mm}
+@media print{
+  body{background:#fff;font-size:12px}
+  .top,.no-print,#view-edit,#view-intro{display:none!important}
+  main{max-width:none;padding:0}
+  .view[hidden]{display:block!important}
+  #view-edit[hidden],#view-intro[hidden]{display:none!important}
+  .sheet{border:0;border-radius:0;padding:0;margin:0}
+  #view-qf{break-before:page}
+  body:not(.pg) #view-global{display:none!important}
+  body.pg #view-ca,body.pg #view-qf{display:none!important}
+  #view-global .sheet{zoom:0.9}
+  table.gt{font-size:11px} table.gt td,table.gt th{padding:3px 6px}
+  .toast,#errbox{display:none!important}
+  .reps{grid-template-columns:repeat(3,1fr)}
+  #view-ca .sheet{zoom:0.87}
+  table.ca th,table.ca td{padding:3px 5px}
+  .fname{font-size:12.5px}.big{font-size:13.5px}.tiny{font-size:9.5px;line-height:1.2}.fsub{font-size:9.5px}td.mc{font-size:9.5px}
+  table.ca .grp td{padding-top:6px;font-size:10.5px}
+  h1{font-size:20px;margin:2px 0}.lead{margin:0 0 8px}
+  table.qf td{padding:3px 8px}.qd{font-size:13px}.chip{font-size:11.5px;padding:0 6px;margin:1px 3px 1px 0}
+  table.rep{font-size:11px}table.rep td,table.rep th{padding:2px 6px}
+  .legend{margin-top:6px;font-size:11px}.note{font-size:10px}
+  .scroll{overflow:visible}
+  table.ca{min-width:0}
+  tr,td,th{break-inside:avoid}
+  table.qf tr{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-in">
+    <div class="brand"><span id="brand-t">Planning et CA</span><small id="brand-sub"></small></div>
+    <div class="seg" role="group" aria-label="Établissement" id="sites-seg"></div>
+    <div class="seg" role="group" aria-label="Affichage">
+      <button type="button" id="v-intro" aria-pressed="true">Accueil</button>
+      <button type="button" id="v-ca" aria-pressed="false">Tableau CA <span data-annee></span></button>
+      <button type="button" id="v-qf" aria-pressed="false">Qui finit quand</button>
+      <button type="button" id="v-edit" aria-pressed="false">Modifier les données</button>
+      <button type="button" id="v-global" aria-pressed="false">CA global</button>
+    </div>
+    <div class="spacer"></div>
+    <span class="status" id="status" aria-live="polite"></span>
+    <button type="button" class="btn save" id="btn-save">Enregistrer</button>
+    <button type="button" class="btn primary" id="btn-print">Imprimer</button>
+  </div>
+</div>
+
+<main>
+  <div id="errbox" class="errbox" hidden></div>
+  <section class="view" id="view-intro"></section>
+  <section class="view" id="view-ca" hidden></section>
+  <section class="view" id="view-qf" hidden></section>
+  <section class="view" id="view-edit" hidden></section>
+  <section class="view" id="view-global" hidden></section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+<input type="file" id="file-in" accept=".json,application/json" hidden>
+
+<script>
+"use strict";
+/* ============ Modèle vierge : aucune donnée pré-remplie ============ */
+
+/* ============ Outils ============ */
+let YEAR = new Date().getFullYear(); /* année de travail : modifiable dans la page d'accueil */
+let Y26 = YEAR - 1;     /* année précédente */
+function setAnnee(a){ a = Math.round(Number(a)); if (!isFinite(a) || a < 2000 || a > 2100) return false; YEAR = a; Y26 = a - 1; return true; }
+const MOIS = ["Janv.","Févr.","Mars","Avr.","Mai","Juin","Juil.","Août","Sept.","Oct.","Nov.","Déc."];
+const MOISL = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const MOISC = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+const JOURS = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+const clone = o => JSON.parse(JSON.stringify(o));
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const isNum = v => typeof v === "number" && isFinite(v);
+function parseDate(s){
+  if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const [y,m,d] = s.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  if (dt.getUTCFullYear()!==y || dt.getUTCMonth()!==m-1 || dt.getUTCDate()!==d) return null;
+  return {y, m, d};
+}
+const court = s => { const p=parseDate(s); return p ? String(p.d).padStart(2,"0")+"/"+String(p.m).padStart(2,"0") : ""; };
+const full = s => { const p=parseDate(s); return p ? court(s)+"/"+p.y : ""; };
+const longDate = s => { const p=parseDate(s); return p ? (p.d===1?"1er":p.d)+" "+MOISL[p.m-1]+" "+p.y : ""; };
+const jour = s => { const p=parseDate(s); return p ? JOURS[new Date(Date.UTC(p.y,p.m-1,p.d)).getUTCDay()] : ""; };
+function eur(v){
+  if (!isNum(v)) return "—";
+  const r = Math.round(v*100)/100;
+  const parts = Math.abs(r).toFixed(2).split(".");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return (r<0?"-":"") + parts[0] + "," + parts[1] + " €";
+}
+function nb(v){
+  if (!isNum(v)) return "—";
+  const r = Math.round(v*100)/100;
+  let [i,d] = Math.abs(r).toFixed(2).split(".");
+  i = i.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return (r<0?"-":"") + (d==="00" ? i : i+","+d.replace(/0$/,""));
+}
+function parseNumber(txt){
+  if (txt === null || txt === undefined) return NaN;
+  const t = String(txt).replace(/\s| | |€/g,"").replace(",",".");
+  if (t === "") return NaN;
+  if (!/^-?\d+(\.\d+)?$/.test(t)) return NaN;
+  return Number(t);
+}
+/* Mois comptés en N entre deux dates (mois touchés, bornés à N) */
+function moisEn2027(debut, fin){
+  const f = parseDate(fin); if (!f) return 0;
+  if (f.y < YEAR) return 0;
+  const d = parseDate(debut);
+  const startM = (!d || d.y < YEAR) ? 1 : (d.y > YEAR ? 13 : d.m);
+  const endM = f.y > YEAR ? 12 : f.m;
+  return Math.max(0, endM - startM + 1);
+}
+/* mois de début de projection → nombre de mois jusqu'à décembre */
+function moisRestants(dateStr){
+  const d = parseDate(dateStr);
+  if (!d || d.y !== YEAR) return 0;
+  return 12 - d.m + 1;
+}
+function addMonthsLabel(dateStr, dureeMois){
+  const d = parseDate(dateStr); if (!d || !(dureeMois>0)) return "";
+  const idx = (d.m-1) + dureeMois - 1;
+  return MOISC[idx%12] + " " + (d.y + Math.floor(idx/12));
+}
+
+/* ============ Listes déroulantes (modifiables ici si besoin) ============ */
+const LISTES = {
+  financeur: ["PRF REGION","REGION (hors prf)","ENTREPRISES","ETAT","INDIVIDUELS","MISE A DISPO"],
+  marcheGip: ["OUI PRF","OUI hors prf","NON","portage gip"],
+  niveau: ["3 (ex V)","4 (ex IV)","5 (ex III)","6 (ex II)","7 (ex I)"],
+  domaine: ["Automobile Peinture","Automobile Carrosserie","Automobile (hors peinture/carrosserie)","Transport (conduite)","Logistique","Travail des métaux","Pôle 5 Autre"],
+  integration: ["NON","en F.I.","en UFA","en F.C."]
+};
+
+
+/* ============ État ============ */
+const KEY = "planning-ca-vierge-v1";
+let state;
+let site = "";
+let view = "intro";
+let affichage = "minore";
+let storageOK = true;
+
+function load(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (valideStructure(data)) state = migrer(normalise(data));
+    }
+    const ui = JSON.parse(localStorage.getItem(KEY+"-ui") || "{}");
+    if (ui.site && state.sites[ui.site]) site = ui.site;
+    if (["intro","ca","qf","edit","global"].includes(ui.view)) view = ui.view;
+    if (ui.v === 5 && ["brut","minore"].includes(ui.affichage)) affichage = ui.affichage;
+  } catch(e){ storageOK = false; }
+}
+function save(){
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+    localStorage.setItem(KEY+"-ui", JSON.stringify({v:5, site, view, affichage}));
+    setStatus("Enregistré automatiquement", true);
+  } catch(e){
+    storageOK = false;
+    setStatus("Enregistrement automatique indisponible : pensez à « Enregistrer une copie »", false);
+  }
+}
+function valideStructure(d){
+  return d && typeof d === "object" && d.sites && typeof d.sites === "object" && !Array.isArray(d.sites) &&
+    Object.values(d.sites).every(s => s && Array.isArray(s.actions) && Array.isArray(s.apprentissage));
+}
+function str(v, def){ return typeof v === "string" ? v : def; }
+function numOr(v, def){ return isNum(v) ? v : def; }
+function numOrNull(v){ return isNum(v) ? v : null; }
+
+/* Complète les champs manquants pour éviter toute erreur de calcul */
+function normPeriode(p){ p = p && typeof p === "object" ? p : {}; return {eff:numOrNull(p.eff), heures:numOrNull(p.heures), tarif:numOrNull(p.tarif), forfait:numOrNull(p.forfait), caSaisi:numOrNull(p.caSaisi)}; }
+function normCommun(o, cat){
+  const ent = cat !== "actions";
+  return {
+    financeur: str(o.financeur, ent ? "ENTREPRISES" : "PRF REGION"),
+    marcheGip: str(o.marcheGip, ent ? "NON" : "OUI PRF"),
+    niveau: str(o.niveau, ""), domaine: str(o.domaine, ""), integration: str(o.integration, "NON"),
+    absent: isNum(o.absent) ? o.absent : (ent ? 10 : 20),
+    methode: ["matrice","bdc","dates"].includes(o.methode) && !((o.methode === "bdc" || o.methode === "dates") && cat === "apprentissage") ? o.methode : "auto",
+    p1: normPeriode(o.p1), p2: normPeriode(o.p2), saisiPeriodes: !!o.saisiPeriodes,
+    datesAPreciser: !!o.datesAPreciser, observations: str(o.observations, ""), src: str(o.src, ""), ref: str(o.ref, "")
+  };
+}
+function normActionBase(a){
+  return {nom: str(a.nom,"Nouvelle action"), lieu: str(a.lieu,""), bdc: str(a.bdc,""),
+    montant: numOr(a.montant,0), debut: str(a.debut,""), fin: str(a.fin,""),
+    mois2027: numOr(a.mois2027,0), duree: numOr(a.duree,0),
+    relance: !!a.relance, dateRelance: str(a.dateRelance,`${YEAR}-09-01`), neutre: !!a.neutre,
+    examDebut: str(a.examDebut,""), examFin: str(a.examFin,""), examLabel: str(a.examLabel,"Épreuves"), bilan: str(a.bilan,""),
+    bdcStag: numOrNull(a.bdcStag), bdcPrix: numOrNull(a.bdcPrix), bdcHeures: numOrNull(a.bdcHeures), h1: numOrNull(a.h1), h2: numOrNull(a.h2),
+    hEnt: numOrNull(a.hEnt), planC: plan12(a.planC), planE: plan12(a.planE), y26: normY26(a.y26), r27: normR27(a.r27)};
+}
+function plan12(v){ const a = Array.isArray(v) ? v : []; return Array.from({length:12}, (_,i) => numOrNull(a[i])); }
+function normApprBase(f){
+  return {nom: str(f.nom,"Nouvelle formation"), code: str(f.code,""), debut: str(f.debut,""), fin: str(f.fin,""),
+    bdcHeures: numOrNull(f.bdcHeures), hEnt: numOrNull(f.hEnt), planC: plan12(f.planC), planE: plan12(f.planE), y26: normY26(f.y26),
+    ap26: normZoneAppr(f.ap26, {actif:true, mode: Array.isArray(f.apprentis) && f.apprentis.length ? "liste" : "global", debut: str(f.debut,""), fin: str(f.fin,"")}),
+    ap27: normZoneAppr(f.ap27, {actif: isNum(f.projNb) && f.projNb > 0, mode:"global", debut: str(f.projDate,`${YEAR}-09-01`), fin:"", nb: isNum(f.projNb) && f.projNb > 0 ? f.projNb : null, pec: isNum(f.projPec) ? f.projPec : null}),
+    examDebut: str(f.examDebut,""), examFin: str(f.examFin,""), examLabel: str(f.examLabel,""),
+    projNb: numOr(f.projNb,0), projPec: isNum(f.projPec) ? f.projPec : null, projDate: str(f.projDate,`${YEAR}-09-01`),
+    apprentis: Array.isArray(f.apprentis) ? f.apprentis.map(p => ({
+      nom: str(p && p.nom,""), contrat: str(p && p.contrat,""), debut: str(p && p.debut,""), fin: str(p && p.fin,""), pec: p && isNum(p.pec) ? p.pec : null
+    })) : []};
+}
+/* Méthode « bon de commande » : les heures sont saisies par période (comme la matrice) */
+function migrerBDC(o){
+  if (o.methode !== "bdc") return o;
+  if (!isNum(o.h1) && !isNum(o.h2)) return o; /* reprise unique des anciennes données (h1/h2) : jamais de préremplissage caché ensuite */
+  const vide = p => !isNum(p.eff) && !isNum(p.heures) && !isNum(p.tarif);
+  if (vide(o.p1) && (isNum(o.bdcStag) || isNum(o.h1))) o.p1 = normPeriode({eff:o.bdcStag, heures:o.h1, tarif:o.bdcPrix});
+  if (vide(o.p2) && isNum(o.h2) && o.relance !== false) o.p2 = normPeriode({eff:o.bdcStag, heures:o.h2, tarif:o.bdcPrix});
+  o.h1 = null; o.h2 = null;
+  return o;
+}
+function normAction(a){ return migrerBDC(Object.assign(normActionBase(a), normCommun(a, "actions"))); }
+function normAppr(f){ const o = Object.assign(normApprBase(f), normCommun(f, "apprentissage")); o.ap27.mode = "global"; return o; }
+function normFP(f){
+  const a = normActionBase(f), p = normApprBase(f);
+  return migrerBDC(Object.assign({}, a, {code: p.code, projNb: p.projNb, projPec: p.projPec, projDate: p.projDate, apprentis: p.apprentis, ap26: p.ap26, ap27: p.ap27,
+    nom: str(f.nom,"Nouvelle formation fonds privés"), mode: f.mode === "stagiaire" ? "stagiaire" : "global"}, normCommun(f, "fp")));
+}
+/* ============ Fonds privés individuels ============ */
+const FINANCEMENTS = ["CPF","Autofinancement (particulier)","Employeur (plan de développement des compétences)","OPCO","France Travail (AIF)","Transition Pro (PTP)","Région / collectivité","Autre"];
+function normStagFPI(x){
+  x = x && typeof x === "object" ? x : {};
+  return {nom: str(x.nom,""), financement: str(x.financement,""), dossier: str(x.dossier,""), debut: str(x.debut,""), fin: str(x.fin,""), montant: numOrNull(x.montant)};
+}
+function normFPI(f){
+  f = f && typeof f === "object" ? f : {};
+  return {nom: str(f.nom,"Nouvelle formation fonds privés individuels"), lieu: str(f.lieu,""), financeur: str(f.financeur,"INDIVIDUELS"),
+    niveau: str(f.niveau,""), domaine: str(f.domaine,""), absent: isNum(f.absent) ? f.absent : 0, observations: str(f.observations,""),
+    stagiaires: Array.isArray(f.stagiaires) ? f.stagiaires.map(normStagFPI) : [],
+    stagiaires27: Array.isArray(f.stagiaires27) ? f.stagiaires27.map(normStagFPI) : []};
+}
+function caStagFPI(x){ const mc = moisComptes(x.debut, x.fin); if (!mc || !isNum(x.montant)) return {ca:0, mc, ok:false}; return {ca: x.montant * mc.an / mc.total, mc, ok:true}; }
+function calcFPI(o){
+  let cur = 0, prev = 0, manquants = 0;
+  o.stagiaires.forEach(x => { const r = caStagFPI(x); if (r.ok) cur += r.ca; else if (x.nom || isNum(x.montant)) manquants++; });
+  o.stagiaires27.forEach(x => { const r = caStagFPI(x); if (r.ok) prev += r.ca; else if (x.nom || isNum(x.montant)) manquants++; });
+  return {cur, prev, tot: cur + prev, ok: true, manquants, nbp: o.stagiaires27.length};
+}
+function sansInfoFPI(o){ return ![...o.stagiaires, ...o.stagiaires27].some(x => isNum(x.montant) && x.montant > 0); }
+function financementsTxt(o){
+  const T = {}; [...o.stagiaires, ...o.stagiaires27].forEach(x => { const k = x.financement || "financement ?"; T[k] = (T[k]||0) + 1; });
+  return Object.entries(T).map(([k,n]) => `${k.split(" (")[0]} ${n}`).join(" · ");
+}
+function siteVide(){ return {notesHors:"", actions:[], apprentissage:[], fondsPrives:[], fondsPrivesInd:[]}; }
+function nouvelId(){ return "e" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function normalise(d){
+  /* l'année doit être connue avant de compléter les champs (dates par défaut) */
+  if (isNum(d.annee)) setAnnee(d.annee);
+  const out = {version:6, annee: YEAR, organisme: str(d.organisme, ""), etabs: [], sites:{}};
+  const src = d.sites && typeof d.sites === "object" ? d.sites : {};
+  /* liste des établissements : celle enregistrée, sinon reconstituée depuis une ancienne copie (un établissement par site) */
+  let etabs = Array.isArray(d.etabs) ? d.etabs : Object.keys(src).map(k => ({id:k, nom:k}));
+  const vus = new Set();
+  etabs.forEach(e => {
+    if (!e || typeof e !== "object") return;
+    let id = str(e.id, "") || nouvelId();
+    while (vus.has(id)) id = nouvelId();
+    vus.add(id);
+    out.etabs.push({id, nom: str(e.nom, "")});
+    const s = src[e.id] && typeof src[e.id] === "object" ? src[e.id] : siteVide();
+    out.sites[id] = {
+      notesHors: typeof s.notesHors === "string" ? s.notesHors : "",
+      actions: Array.isArray(s.actions) ? s.actions.map(normAction) : [],
+      apprentissage: Array.isArray(s.apprentissage) ? s.apprentissage.map(normAppr) : [],
+      fondsPrives: Array.isArray(s.fondsPrives) ? s.fondsPrives.map(normFP) : [],
+      fondsPrivesInd: Array.isArray(s.fondsPrivesInd) ? s.fondsPrivesInd.map(normFPI) : []
+    };
+  });
+  return out;
+}
+/* Libellés des établissements */
+function nomEtab(id){ const e = state && state.etabs.find(x => x.id === id); return e ? (e.nom.trim() || "Établissement sans nom") : ""; }
+function eyebrow(id){ return [state.organisme.trim(), nomEtab(id), "Année " + YEAR].filter(Boolean).join(" · "); }
+function migrer(st){ return st; }
+function donneesOrigine(){ return normalise({annee: YEAR, organisme: "", etabs: [], sites: {}}); }
+function finDeMois(debut, nbMois){ const d = parseDate(debut); if (!d || !(nbMois > 0)) return ""; const idx = d.y*12 + d.m - 1 + nbMois - 1; const y = Math.floor(idx/12), m = idx%12 + 1; return `${y}-${String(m).padStart(2,"0")}-${String(joursMois(y,m)).padStart(2,"0")}`; }
+
+/* ============ Calculs ============ */
+function calcAction(a){
+  const duree = isNum(a.duree) && a.duree > 0 ? a.duree : 0;
+  const montant = isNum(a.montant) ? a.montant : 0;
+  const mois = isNum(a.mois2027) && a.mois2027 >= 0 ? a.mois2027 : 0;
+  const mr = a.relance ? moisRestants(a.dateRelance) : 0;
+  if (a.neutre) return {cur:0, prev:0, tot:0, mr, ok:true};
+  if (!duree) return {cur:0, prev:0, tot:0, mr, ok:false, pb:"durée manquante"};
+  const cur = montant * Math.min(mois, duree) / duree; /* jamais plus que le montant du bon de commande */
+  const prev = a.relance ? montant * mr / duree : 0;
+  return {cur, prev, tot:cur+prev, mr, ok:true};
+}
+function calcAppr(f){
+  const z1 = f.ap26, z2 = f.ap27;
+  let cur = 0, manquants = 0, prev = 0;
+  if (z1.mode === "liste") { const r = caListe(f.apprentis); cur = r.t; manquants += r.manq; } else cur = caGlobal(z1);
+  if (z2.actif) { if (z2.mode === "liste") { const r = caListe(z2.apprentis); prev = r.t; manquants += r.manq; } else if (f.mode === "stagiaire") prev = caGlobal(z2); else { const r = caRentreeMixte(z2); prev = r.t; manquants += r.manq; } }
+  const vide2 = z2.mode === "global" && f.mode !== "stagiaire" ? (!globalOk(z2) && !z2.apprentis.length) : zoneVide(z2, z2.apprentis);
+  const sansPec = zoneVide(z1, f.apprentis) && (!z2.actif || vide2);
+  const nbp = z2.actif ? (z2.mode === "global" && f.mode !== "stagiaire" ? Math.max(isNum(z2.nb) ? z2.nb : 0, z2.apprentis.length) : effectifZone(z2, z2.apprentis)) : 0;
+  return {cur, prev, tot:cur+prev, mr: moisGlobal(z2), nbp, pecOk: true, manquants, sansPec};
+}
+function calcBDC(o){
+  const n = v => isNum(v) ? v : 0;
+  const cur = n(o.bdcStag) * n(o.h1) * n(o.bdcPrix);
+  const prev = o.relance ? n(o.bdcStag) * n(o.h2) * n(o.bdcPrix) : 0;
+  return {cur, prev, tot:cur+prev, ok: n(o.bdcStag) > 0 && n(o.bdcPrix) > 0};
+}
+function caCalcule(p){ const n = v => isNum(v) ? v : 0; return n(p.forfait) + n(p.eff) * n(p.heures) * n(p.tarif); }
+function caPeriode(p){ return isNum(p.caSaisi) ? p.caSaisi : caCalcule(p); }
+/* Heures BDC : stagiaires × heures × prix uniquement (forfait et CA saisi sont propres à la matrice et ignorés, sans être effacés) */
+function caHeures(p){ const n = v => isNum(v) ? v : 0; return n(p.eff) * n(p.heures) * n(p.tarif); }
+function caPer(o, key){ return o.methode === "bdc" ? caHeures(o[key]) : caPeriode(o[key]); }
+function calcMatrice(o){ const cur = caPer(o, "p1"), prev = caPer(o, "p2"); return {cur, prev, tot:cur+prev, ok:true}; }
+/* Actions et fonds privés : pas d'information du bon de commande (parcours, heures centre, prix ou montant) = pas de CA */
+function soumisAuBDC(o, cat){ return cat === "actions" || (cat === "fp" && !(o.methode === "auto" && o.mode === "stagiaire")); }
+function sansInfo(o, cat){
+  if (cat === "fpi") return sansInfoFPI(o);
+  if (!soumisAuBDC(o, cat)) return false;
+  if (o.methode === "dates") return sessionEnCours(o).montant === null && !(o.r27 && o.r27.actif && sessionRentree(o).montant !== null);
+  /* périodes janv.-août / sept.-déc. saisies par l'utilisateur : elles comptent même sans bon de commande */
+  if ((o.methode === "matrice" || o.methode === "bdc") && o.saisiPeriodes && (periodeActive(o.p1, o) || periodeActive(o.p2, o))) return false;
+  const complet = isNum(o.bdcStag) && isNum(o.bdcHeures) && isNum(o.bdcPrix);
+  return !complet && !(isNum(o.montant) && o.montant > 0);
+}
+/* CA brut d'une ligne, quelle que soit la catégorie */
+function calcBrut(o, cat){
+  if (cat === "fpi") return sansInfoFPI(o) ? {cur:0, prev:0, tot:0, ok:true, vide:true} : calcFPI(o);
+  if (sansInfo(o, cat)) return {cur:0, prev:0, tot:0, ok:true, vide:true};
+  if (o.methode === "matrice") return o.neutre ? {cur:0, prev:0, tot:0, ok:true} : calcMatrice(o);
+  if (o.methode === "bdc") return o.neutre ? {cur:0, prev:0, tot:0, ok:true} : calcMatrice(o);
+  if (o.methode === "dates") { if (!o.neutre) return calcDates(o); const r = sessionRentree(o); return {cur:0, prev:r.ca, tot:r.ca, ok:true, a:sessionEnCours(o), b:r}; }
+  if (cat === "actions") return calcAction(o);
+  if (cat === "apprentissage") return calcAppr(o);
+  return o.mode === "stagiaire" ? calcAppr(o) : calcAction(o);
+}
+function calcFP(f){ return calcBrut(f, "fp"); }
+function coefMinore(o){ const a = isNum(o.absent) ? Math.min(Math.max(o.absent,0),100) : 0; return 1 - a/100; }
+function coef(o){ return affichage === "minore" ? coefMinore(o) : 1; }
+/* Ligne neutre : la session en cours est hors totaux ; une rentrée N prévue et chiffrée, elle, est comptée */
+function rentreeComptee(o){ return o.methode === "dates" && o.r27 && o.r27.actif && sessionRentree(o).montant !== null; }
+function estNeutre(o, cat){ return (cat === "actions" || (cat === "fp" && (o.mode !== "stagiaire" || o.methode !== "auto"))) && o.neutre && !rentreeComptee(o); }
+
+/* ============ Rendu : tableau CA ============ */
+function monthIdx(s){ const p=parseDate(s); if(!p) return null; if(p.y<YEAR) return -1; if(p.y>YEAR) return 12; return p.m-1; }
+function cellsFor(fn){ let h=""; for(let m=0;m<12;m++){ const c=fn(m); h+=`<td class="mc ${c.cls||""}">${c.txt||""}</td>`; } return h; }
+function absNote(o){ return affichage === "minore" && coefMinore(o) < 1 ? `<div class="tiny num">− ${nb(o.absent)} % absentéisme prévu</div>` : ""; }
+function classTxt(o){ return [o.financeur, o.niveau ? "niv. "+o.niveau.split(" ")[0] : "", isNum(o.bdcHeures) ? "centre "+nb(o.bdcHeures)+" h" : "", isNum(o.hEnt) ? "entreprise "+nb(o.hEnt)+" h" : ""].filter(Boolean).join(" · "); }
+
+/* Ligne « prorata du bon de commande » */
+function actionRow(a, col, sub){
+  const c = calcAction(a), k = coef(a);
+  const s = monthIdx(a.debut), e = monthIdx(a.fin);
+  const bi = monthIdx(a.bilan), ex = monthIdx(a.examDebut), rs = a.relance && !a.neutre ? monthIdx(a.dateRelance) : null;
+  const curCls = a.neutre ? "cur-n" : col.cls;
+  const cells = cellsFor(m => {
+    let cls="", txt="";
+    if (e!==null && e>=0 && m <= Math.min(e,11) && (s===null || m >= Math.max(s,0))) cls = curCls;
+    if (bi===m && m!==e) txt = "Bilan "+court(a.bilan);
+    if (ex===m && m!==e) txt = esc(a.examLabel||"Épr.")+" "+court(a.examDebut);
+    if (e===m) txt = "■ Fin "+court(a.fin);
+    if (rs!==null && rs>=0 && rs<12 && m>=rs){ cls="nw"; txt = m===rs ? "Début "+court(a.dateRelance) : (m===11 ? "→ "+addMonthsLabel(a.dateRelance,a.duree) : ""); }
+    if (e===12 && m===11 && !(rs!==null && rs>=0 && rs<12)) txt = "→ "+full(a.fin);
+    return {cls, txt};
+  });
+  const left = a.neutre
+    ? `<div class="big num">${eur(a.montant)}</div><div class="tiny num">montant · ligne neutre</div>`
+    : (c.ok ? `<div class="big num" style="color:${col.c}">${eur(c.cur*k)}</div><div class="tiny num">× ${nb(a.mois2027)}/${nb(a.duree)} mois</div>${absNote(a)}` : `<div class="warn tiny">Durée à renseigner</div>`);
+  const right = a.neutre
+    ? `<div class="big num">—</div><div class="tiny num">non compté dans les totaux</div>`
+    : `<div class="big num">${eur(c.tot*k)}</div>` + (a.relance ? `<div class="tiny num" style="color:var(--new)">dont prév. ${eur(c.prev*k)} (× ${c.mr}/${nb(a.duree)})</div>` : `<div class="tiny num">sans redémarrage</div>`);
+  const subTxt = sub !== undefined ? sub : esc([a.lieu, a.bdc?"BDC "+a.bdc:"", eur(a.montant)].filter(Boolean).join(" · "));
+  return `<tr class="${a.neutre?"neutral":""}"><td><div class="fname">${esc(a.nom)}</div><div class="fsub">${subTxt}</div><div class="fsub">${esc(classTxt(a))}</div></td>
+    <td class="money">${left}</td>${cells}<td class="money">${right}</td></tr>`;
+}
+/* Ligne « par personne » (PEC ou prix) */
+function apprRow(f, col, mots){
+  const c = calcAppr(f), k = coef(f);
+  const byEnd = {};
+  f.apprentis.forEach(p => { const mi = monthIdx(p.fin); if (mi!==null && mi>=0 && mi<12) (byEnd[mi]=byEnd[mi]||[]).push(p); });
+  let lastM = Math.max(-1, ...Object.keys(byEnd).map(Number));
+  let sessEnd = null, sessCont = false;
+  if (!f.apprentis.length) { sessEnd = monthIdx(f.fin); if (sessEnd===12){ lastM = 11; sessCont = true; } else if (sessEnd!==null && sessEnd>=0) lastM = sessEnd; }
+  else if (f.apprentis.some(p => monthIdx(p.fin)===12)) { lastM = 11; sessCont = true; }
+  const rs = c.nbp ? monthIdx(f.projDate) : null;
+  const ex = monthIdx(f.examDebut);
+  const cells = cellsFor(m => {
+    let cls="", txt="";
+    if (m <= lastM) cls = col.cls;
+    if (!f.apprentis.length && ex===m && sessEnd!==m && f.examLabel) txt = esc(f.examLabel)+" "+court(f.examDebut);
+    if (byEnd[m]) { const ds=[...new Set(byEnd[m].map(p=>p.fin))].sort(); txt = ds.map(d => "■ "+court(d)+" ("+byEnd[m].filter(p=>p.fin===d).length+")").join("<br>"); }
+    if (!f.apprentis.length && sessEnd===m) txt = "■ Fin "+court(f.fin);
+    if (sessCont && m===11 && !(rs!==null && rs>=0 && rs<12)) txt = "→ "+(f.apprentis.length ? `${YEAR+1}` : full(f.fin));
+    if (rs!==null && rs>=0 && rs<12 && m>=rs){ cls="nw"; txt = m===rs ? c.nbp+" stagiaire"+(c.nbp>1?"s":"") : ""; }
+    return {cls, txt};
+  });
+  let left, right;
+  if (c.sansPec) {
+    const pm = parseDate(f.projDate);
+    left = `<div class="tiny num">${mots.prix} non communiqué(e)</div>`;
+    right = `<div class="tiny num">${c.nbp ? "nouvelle promo : "+c.nbp+" stagiaires dès "+(pm?MOISC[pm.m-1]:"") : (sessCont ? "se poursuit jusqu'au "+full(f.fin) : "")}</div>`;
+  } else {
+    const n = f.apprentis.length;
+    left = `<div class="big num" style="color:${col.c}">${eur(c.cur*k)}</div><div class="tiny num">${n} ${mots.contrat}${n>1?"s":""} · ${mots.prixCourt} × mois/12</div>${absNote(f)}` + (c.manquants ? `<div class="warn tiny num">${c.manquants} ${mots.prixCourt} manquant(s)</div>` : "");
+    right = `<div class="big num">${eur(c.tot*k)}</div>` + (c.nbp && c.pecOk ? `<div class="tiny num" style="color:var(--new)">dont prév. ${eur(c.prev*k)} (${c.nbp} × ${nb(f.projPec)} € × ${c.mr}/12)</div>` : (c.nbp && !c.pecOk ? `<div class="warn tiny num">${mots.prixCourt} de projection à renseigner</div>` : `<div class="tiny num">sans projection</div>`));
+  }
+  const n = f.apprentis.length;
+  const sub = [esc(f.code), n ? `${n} ${mots.personne}${n>1?"s":""}` : ""].filter(Boolean).join(" · ");
+  return `<tr><td><div class="fname">${esc(f.nom)}</div><div class="fsub">${sub}</div><div class="fsub">${esc(classTxt(f))}</div></td><td class="money">${left}</td>${cells}<td class="money">${right}</td></tr>`;
+}
+/* Ligne « bon de commande : heures » */
+function bdcDetail(o, h){ return `${nb(isNum(o.bdcStag)?o.bdcStag:0)} × ${nb(isNum(h)?h:0)} h × ${nb(isNum(o.bdcPrix)?o.bdcPrix:0)} €`; }
+function bdcRow(a, col, sub){
+  const c = calcBDC(a), k = coef(a);
+  const s = monthIdx(a.debut), e = monthIdx(a.fin);
+  const bi = monthIdx(a.bilan), ex = monthIdx(a.examDebut), rs = a.relance && !a.neutre ? monthIdx(a.dateRelance) : null;
+  const curCls = a.neutre ? "cur-n" : col.cls;
+  const cells = cellsFor(m => {
+    let cls="", txt="";
+    if (e!==null && e>=0 && m <= Math.min(e,11) && (s===null || m >= Math.max(s,0))) cls = curCls;
+    if (bi===m && m!==e) txt = "Bilan "+court(a.bilan);
+    if (ex===m && m!==e) txt = esc(a.examLabel||"Épr.")+" "+court(a.examDebut);
+    if (e===m) txt = "■ Fin "+court(a.fin);
+    if (rs!==null && rs>=0 && rs<12 && m>=rs){ cls="nw"; txt = m===rs ? "Début "+court(a.dateRelance) : (m===11 && isNum(a.h2) ? nb(a.h2)+" h" : ""); }
+    if (e===12 && m===11 && !(rs!==null && rs>=0 && rs<12)) txt = "→ "+full(a.fin);
+    return {cls, txt};
+  });
+  const warn = c.ok ? "" : `<div class="warn tiny">Stagiaires et prix à renseigner</div>`;
+  const left = a.neutre
+    ? `<div class="big num">${eur(a.montant)}</div><div class="tiny num">montant · ligne neutre</div>`
+    : `<div class="big num" style="color:${col.c}">${eur(c.cur*k)}</div><div class="tiny num">${bdcDetail(a, a.h1)}</div>${absNote(a)}${warn}`;
+  const right = a.neutre
+    ? `<div class="big num">—</div><div class="tiny num">non compté dans les totaux</div>`
+    : `<div class="big num">${eur(c.tot*k)}</div>` + (a.relance ? `<div class="tiny num" style="color:var(--new)">dont prév. ${eur(c.prev*k)} (${bdcDetail(a, a.h2)})</div>` : `<div class="tiny num">sans redémarrage</div>`);
+  const subTxt = sub !== undefined ? sub : esc([a.lieu, a.bdc?"BDC "+a.bdc:"", eur(a.montant)].filter(Boolean).join(" · "));
+  return `<tr class="${a.neutre?"neutral":""}"><td><div class="fname">${esc(a.nom)}</div><div class="fsub">${subTxt}</div><div class="fsub">${esc(classTxt(a))} · heures BDC</div></td>
+    <td class="money">${left}</td>${cells}<td class="money">${right}</td></tr>`;
+}
+/* Ligne « matrice » : janv.-août / sept.-déc. */
+function detailPeriode(p){
+  const n = v => isNum(v) ? v : 0;
+  const parts = [];
+  if (n(p.eff) && n(p.heures) && n(p.tarif)) parts.push(`${nb(p.eff)} × ${nb(p.heures)} h × ${nb(p.tarif)} €`);
+  else if (n(p.eff) || n(p.heures)) parts.push(`${nb(n(p.eff))} stag. · ${nb(n(p.heures))} h`);
+  if (n(p.forfait)) parts.unshift("forfait");
+  if (isNum(p.caSaisi)) parts.unshift("CA saisi");
+  return parts.join(" · ");
+}
+function periodeActive(p, o){ return (o && o.methode === "bdc" ? caHeures(p) : caPeriode(p)) > 0 || (isNum(p.eff) && p.eff > 0) || (isNum(p.heures) && p.heures > 0); }
+function matriceRow(o, col, sub, etiquette){
+  const c = calcMatrice(o), k = coef(o), neutre = !!o.neutre;
+  const s = monthIdx(o.debut), e = monthIdx(o.fin);
+  const hasDates = !o.datesAPreciser && e !== null && e >= 0;
+  const p1on = periodeActive(o.p1, o), p2on = periodeActive(o.p2, o);
+  const curCls = neutre ? "cur-n" : col.cls;
+  let debutP2 = 8;
+  if (o.methode === "bdc") { const r = monthIdx(o.dateRelance); if (r !== null && r >= 0 && r < 12) debutP2 = r; }
+  const p2Blue = p2on && !(hasDates && e >= debutP2);
+  const bi = monthIdx(o.bilan), ex = monthIdx(o.examDebut);
+  const cells = cellsFor(m => {
+    let cls = "", txt = "";
+    if (hasDates) { if (m <= Math.min(e,11) && (s===null || m >= Math.max(s,0))) cls = curCls; }
+    else if (p1on && m <= 7) cls = curCls;
+    if (hasDates) {
+      if (bi===m && m!==e) txt = "Bilan "+court(o.bilan);
+      if (ex===m && m!==e && o.examLabel) txt = esc(o.examLabel)+" "+court(o.examDebut);
+      if (e===m) txt = "■ Fin "+court(o.fin);
+      if (e===12 && m===11) txt = "→ "+full(o.fin);
+    } else if (m===0 && p1on) txt = "janv.-août";
+    if (p2Blue && m >= debutP2) { cls = neutre ? "cur-n" : "nw"; if (m===debutP2) txt = isNum(o.p2.eff) && o.p2.eff ? nb(o.p2.eff)+" stag." : "sept.-déc."; }
+    return {cls, txt};
+  });
+  const d1 = detailPeriode(o.p1), d2 = detailPeriode(o.p2);
+  const lib2 = debutP2 === 8 ? "sept.-déc." : MOISC[debutP2]+"-déc.";
+  const brutNote = (v) => affichage === "minore" && k < 1 ? `<div class="tiny num">brut ${eur(v)} − ${nb(o.absent)} % absentéisme</div>` : "";
+  const left = neutre
+    ? `<div class="big num">${eur(caPer(o, "p1"))}</div><div class="tiny num">ligne neutre · hors totaux</div>`
+    : `<div class="big num" style="color:${col.c}">${eur(c.cur*k)}</div><div class="tiny num">janv.-août${d1?" : "+d1:""}</div>${brutNote(c.cur)}`;
+  const right = neutre
+    ? `<div class="big num">—</div><div class="tiny num">${lib2} : ${eur(caPer(o, "p2"))} (non compté)</div>`
+    : `<div class="big num">${eur(c.tot*k)}</div><div class="tiny num" style="color:var(--new)">dont ${lib2} ${eur(c.prev*k)}${d2?" ("+d2+")":""}</div>${brutNote(c.tot)}`;
+  const subTxt = sub !== undefined ? sub : esc([o.lieu || o.code, o.datesAPreciser ? "dates à préciser" : ""].filter(Boolean).join(" · "));
+  return `<tr class="${neutre?"neutral":""}"><td><div class="fname">${esc(o.nom)}</div><div class="fsub">${subTxt}</div><div class="fsub">${esc(classTxt(o))} · ${etiquette || "matrice"}</div></td>
+    <td class="money">${left}</td>${cells}<td class="money">${right}</td></tr>`;
+}
+/* Choix de la ligne selon la catégorie et la méthode */
+const COLS = {actions:{c:"var(--ses)", cls:"cur-a"}, apprentissage:{c:"var(--app)", cls:"cur-p"}, fp:{c:"var(--fp)", cls:"cur-f"}, fpi:{c:"var(--fpi)", cls:"cur-i"}};
+function fpiRow(o, col){
+  const c = calcFPI(o), k = coef(o);
+  const couv = Array(12).fill(""), fins = {};
+  const marque = (liste, cls) => liste.forEach(x => {
+    const r = caStagFPI(x); if (r.mc) r.mc.mois2027.forEach(m => { if (couv[m] !== "nw") couv[m] = cls; });
+    const mi = monthIdx(x.fin); if (mi !== null && mi >= 0 && mi < 12) (fins[mi] = fins[mi] || []).push(x.fin);
+  });
+  marque(o.stagiaires, col.cls); marque(o.stagiaires27, "nw");
+  const cells = cellsFor(m => ({cls: couv[m], txt: fins[m] ? [...new Set(fins[m])].sort().map(d => "■ " + court(d) + " (" + fins[m].filter(x => x === d).length + ")").join("<br>") : ""}));
+  const n1 = o.stagiaires.length, n2 = o.stagiaires27.length;
+  const left = `<div class="big num" style="color:${col.c}">${eur(c.cur*k)}</div><div class="tiny num">${n1} stagiaire${n1>1?"s":""} · montant × mois ${YEAR} / durée</div>${absNote(o)}` + (c.manquants ? `<div class="warn tiny num">${c.manquants} ligne(s) incomplète(s)</div>` : "");
+  const right = `<div class="big num">${eur(c.tot*k)}</div>` + (n2 ? `<div class="tiny num" style="color:var(--new)">dont rentrée ${YEAR} : ${eur(c.prev*k)} (${n2} stagiaire${n2>1?"s":""})</div>` : `<div class="tiny num">sans rentrée ${YEAR}</div>`);
+  const sub = [o.lieu, "fonds privés individuels"].filter(Boolean).join(" · ");
+  return `<tr><td><div class="fname">${esc(o.nom)}</div><div class="fsub">${esc(sub)}</div><div class="fsub">${esc(financementsTxt(o))}</div></td><td class="money">${left}</td>${cells}<td class="money">${right}</td></tr>`;
+}
+function rowFor(o, cat){
+  const col = COLS[cat];
+  if (cat === "fpi" && !sansInfo(o, cat)) return fpiRow(o, col);
+  if (sansInfo(o, cat)) {
+    const cells = cellsFor(() => ({cls:"", txt:""}));
+    return `<tr class="neutral"><td><div class="fname">${esc(o.nom)}</div><div class="fsub">${esc([o.lieu, o.bdc?"BDC "+o.bdc:"", cat==="fpi"?"fonds privés individuels":""].filter(Boolean).join(" · "))}</div><div class="fsub">${esc(classTxt(o))}</div></td>
+      <td class="money"><div class="big num">—</div><div class="tiny num">aucune information saisie</div></td>${cells}<td class="money"><div class="big num">—</div><div class="tiny num">pas de CA généré</div></td></tr>`;
+  }
+  const subBdc = (lbl) => esc([o.lieu, o.bdc ? lbl+" "+o.bdc : "", o.montant ? eur(o.montant) : ""].filter(Boolean).join(" · "));
+  if (o.methode === "dates") return datesRow(o, col, cat);
+  if (o.methode === "bdc") return matriceRow(o, col, subBdc(cat==="fp"?"Convention":"BDC"), "heures du bon de commande");
+  if (o.methode === "matrice") return matriceRow(o, col, cat === "apprentissage" ? esc([o.code, o.datesAPreciser?"dates à préciser":""].filter(Boolean).join(" · ")) : undefined);
+  if (cat === "actions") return actionRow(o, col);
+  if (cat === "apprentissage") return apprRow2(o, col, MOTS_APP);
+  if (o.mode === "stagiaire") return apprRow2(o, col, MOTS_FP);
+  const n = o.apprentis.length;
+  return actionRow(o, col, esc([o.lieu, o.bdc?"Convention "+o.bdc:"", eur(o.montant), n ? n+" stagiaire"+(n>1?"s":"") : ""].filter(Boolean).join(" · ")));
+}
+const MOTS_APP = {prix:"PEC", prixCourt:"PEC", contrat:"contrat", personne:"apprenti"};
+const MOTS_FP = {prix:"Prix", prixCourt:"prix", contrat:"stagiaire", personne:"stagiaire"};
+
+/* Toutes les lignes du site avec leur catégorie */
+function lignes(S){
+  return [...S.actions.map(o => ({o, cat:"actions"})), ...S.apprentissage.map(o => ({o, cat:"apprentissage"})), ...S.fondsPrives.map(o => ({o, cat:"fp"})), ...(S.fondsPrivesInd||[]).map(o => ({o, cat:"fpi"}))];
+}
+function totauxPar(S, champ, k){
+  const T = {};
+  lignes(S).forEach(({o, cat}) => {
+    if (estNeutre(o, cat)) return;
+    const c = calcBrut(o, cat), m = k(o), cle = o[champ] || "Non renseigné";
+    T[cle] = T[cle] || {l:0, r:0};
+    T[cle].l += c.cur * m; T[cle].r += c.tot * m;
+  });
+  return T;
+}
+
+function vueSansEtab(id){
+  const el = document.getElementById(id);
+  el.innerHTML = `<div class="sheet"><h1>Aucun établissement sélectionné</h1><p class="lead">Commencez par saisir vos établissements dans la page d'accueil.</p><button type="button" class="btn primary" data-act="go-intro">Aller à l'accueil</button></div>`;
+}
+function renderCA(){
+  const S = state.sites[site];
+  if (!S) { vueSansEtab("view-ca"); return; }
+  const tA={l:0,r:0}, tP={l:0,r:0}, tF={l:0,r:0}, tI={l:0,r:0};
+  let rows = "";
+  const add = (t, c, k) => { t.l += c.cur*k; t.r += c.tot*k; };
+
+  rows += `<tr class="grp"><td colspan="15" style="color:var(--ses)">Actions</td></tr>`;
+  if (!S.actions.length) rows += `<tr><td colspan="15" class="tiny">Aucune action. Ajoutez-en une dans « Modifier les données ».</td></tr>`;
+  S.actions.forEach(a => { if (!estNeutre(a, "actions")) add(tA, calcBrut(a, "actions"), coef(a)); rows += rowFor(a, "actions"); });
+
+  let hasAppCA = false;
+  if (S.apprentissage.length) rows += `<tr class="grp"><td colspan="15" style="color:var(--app)">Apprentissage</td></tr>`;
+  S.apprentissage.forEach(f => {
+    const c = calcBrut(f, "apprentissage"); add(tP, c, coef(f));
+    if (f.methode === "matrice" || !c.sansPec) hasAppCA = true;
+    rows += rowFor(f, "apprentissage");
+  });
+
+  if (S.fondsPrives.length) rows += `<tr class="grp"><td colspan="15" style="color:var(--fp)">Fonds privés</td></tr>`;
+  S.fondsPrives.forEach(f => { if (!estNeutre(f, "fp")) add(tF, calcBrut(f, "fp"), coef(f)); rows += rowFor(f, "fp"); });
+
+  if (S.fondsPrivesInd.length) rows += `<tr class="grp"><td colspan="15" style="color:var(--fpi)">Fonds privés individuels</td></tr>`;
+  S.fondsPrivesInd.forEach(f => { add(tI, calcBrut(f, "fpi"), coef(f)); rows += rowFor(f, "fpi"); });
+
+  const totRow = (t,l,r,grand) => `<tr class="tot ${grand?"grand":""}"><td>${t}</td><td class="num">${eur(l)}</td><td colspan="12"></td><td class="num">${eur(r)}</td></tr>`;
+  rows += totRow("Total actions", tA.l, tA.r);
+  if (hasAppCA) rows += totRow("Total apprentissage", tP.l, tP.r);
+  if (S.fondsPrives.length) rows += totRow("Total fonds privés", tF.l, tF.r);
+  if (S.fondsPrivesInd.length) rows += totRow("Total fonds privés individuels", tI.l, tI.r);
+  const L = tA.l+tP.l+tF.l+tI.l, Rr = tA.r+tP.r+tF.r+tI.r;
+  rows += totRow("Total général"+(affichage==="minore"?" (absentéisme déduit)":" (brut)"), L, Rr, true);
+
+  /* totaux brut et minoré, quel que soit l'affichage */
+  let brut = 0, minore = 0;
+  lignes(S).forEach(({o, cat}) => { if (estNeutre(o, cat)) return; const c = calcBrut(o, cat); brut += c.tot; minore += c.tot * coefMinore(o); });
+
+  const repart = (champ, titre) => {
+    const T = totauxPar(S, champ, coef);
+    const cles = Object.keys(T).sort();
+    return `<table class="rep"><thead><tr><th>${titre}</th><th class="num">Début ${YEAR}</th><th class="num">Fin ${YEAR}</th></tr></thead><tbody>
+      ${cles.map(c => `<tr><td>${esc(c)}</td><td class="num">${eur(T[c].l)}</td><td class="num"><b>${eur(T[c].r)}</b></td></tr>`).join("")}</tbody></table>`;
+  };
+
+  const neutres = lignes(S).some(({o,cat}) => estNeutre(o, cat));
+  document.getElementById("view-ca").innerHTML = `
+  <div class="sheet print-page">
+    <div class="eyebrow">${esc(eyebrow(site))}</div>
+    <div class="ca-head">
+      <h1>Projection CA ${YEAR} — existant et prévisionnel</h1>
+      <div class="seg no-print" role="group" aria-label="Montants affichés">
+        <button type="button" data-act="aff-minore" aria-pressed="${affichage==="minore"}">Avec absentéisme prévu</button>
+        <button type="button" data-act="aff-brut" aria-pressed="${affichage==="brut"}">Sans absentéisme (brut)</button>
+      </div>
+    </div>
+    <p class="lead">CA fin ${YEAR} prévu, absentéisme déduit : <b>${eur(minore)}</b> &nbsp;·&nbsp; sans absentéisme : ${eur(brut)} &nbsp;·&nbsp; montants du tableau : <b>${affichage==="minore"?"absentéisme déduit":"bruts"}</b> · début ${YEAR} : ${eur(L)}</p>
+    <div class="scroll"><table class="ca" id="table-ca">
+      <colgroup><col style="width:17%"><col style="width:9.5%">${'<col style="width:4.9%">'.repeat(12)}<col style="width:14.7%"></colgroup>
+      <thead><tr><th style="text-align:left">Formation</th><th class="num" style="color:var(--ink)">CA début ${YEAR} (existant)</th>${MOIS.map(m=>`<th class="m">${m}</th>`).join("")}<th class="num" style="color:var(--ink)">CA fin ${YEAR} (existant + prévisionnel)</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div class="legend">
+      <span><i style="background:var(--sesf)"></i>Action en cours</span>
+      <span><i style="background:var(--appf)"></i>Apprentissage en cours</span>
+      ${S.fondsPrives.length?`<span><i style="background:var(--fpf)"></i>Fonds privés en cours</span>`:""}
+      ${S.fondsPrivesInd.length?`<span><i style="background:var(--fpif)"></i>Fonds privés individuels en cours</span>`:""}
+      ${neutres?`<span><i style="background:var(--neuf)"></i>Ligne neutre (hors totaux)</span>`:""}
+      <span><i style="background:var(--newf)"></i>Prévisionnel / sept.-déc.</span>
+      <span>■ = date de fin (entre parenthèses : nombre de personnes) · → = fin prévue</span>
+    </div>
+    <div class="reps">${repart("financeur","Par financeur")}${repart("domaine","Par domaine")}${repart("niveau","Par niveau")}</div>
+    <p class="note">Heures BDC : stagiaires × heures centre de la période × prix unitaire du marché. Prorata BDC : existant = montant × mois comptés en ${YEAR} / durée ; prévisionnel = montant × mois de redémarrage à décembre / durée. Par personne : prix annuel × mois en ${YEAR} / 12. Fonds privés individuels : montant de chaque stagiaire × mois comptés en ${YEAR} / durée. Matrice : janv.-août et sept.-déc. = forfait + effectif × heures centre × tarif horaire (ou CA saisi). CA minoré = CA brut × (1 − taux d'absentéisme).</p>
+  </div>`;
+}
+
+/* ============ Rendu : CA global (tous les établissements) ============ */
+const TYPES_G = [["actions","Actions"],["apprentissage","Apprentissage"],["fp","Fonds privés"],["fpi","Fonds privés individuels"]];
+function totauxSite(S){
+  const T = {}; TYPES_G.forEach(([c]) => T[c] = {deb:0, fin:0, brut:0, n:0});
+  const lignesG = [];
+  lignes(S).forEach(({o, cat}) => {
+    const neutre = estNeutre(o, cat), c = calcBrut(o, cat), k = coefMinore(o);
+    const l = {o, cat, deb: c.cur*k, fin: c.tot*k, brut: c.tot, neutre};
+    lignesG.push(l);
+    if (neutre) return;
+    const t = T[cat]; t.deb += l.deb; t.fin += l.fin; t.brut += l.brut; t.n++;
+  });
+  const tot = {deb:0, fin:0, brut:0, n:0};
+  Object.values(T).forEach(t => { tot.deb += t.deb; tot.fin += t.fin; tot.brut += t.brut; tot.n += t.n; });
+  return {T, tot, lignes: lignesG};
+}
+function renderGlobal(){
+  const el = document.getElementById("view-global"); if (!el) return;
+  const sites = state.etabs.map(e => e.id), R = {};
+  if (!sites.length) { el.innerHTML = `<div class="sheet"><h1>CA global ${YEAR}</h1><p class="lead">Aucun établissement : ajoutez-en dans la page « Accueil ».</p></div>`; return; }
+  sites.forEach(s => R[s] = totauxSite(state.sites[s]));
+  const G = {deb:0, fin:0, brut:0};
+  sites.forEach(s => { G.deb += R[s].tot.deb; G.fin += R[s].tot.fin; G.brut += R[s].tot.brut; });
+  const nomS = s => esc(nomEtab(s));
+  const cell = (t, cls) => `<td class="${cls||""}">${eur(t.fin)}<span class="gsub">début ${eur(t.deb)}</span></td>`;
+  const catListe = c => CATS[Object.keys(CATS).find(k => CATS[k].cat === c)].list;
+  const types = TYPES_G.filter(([c]) => sites.some(s => R[s].T[c].n || state.sites[s][catListe(c)].length));
+  const rowsType = types.map(([c, lib]) => {
+    const g = {deb:0, fin:0}; sites.forEach(s => { g.deb += R[s].T[c].deb; g.fin += R[s].T[c].fin; });
+    return `<tr><td>${lib}</td>${sites.map(s => cell(R[s].T[c])).join("")}${cell(g, "gl")}</tr>`;
+  }).join("");
+  const partSite = s => G.fin ? Math.round(R[s].tot.fin / G.fin * 100) : 0;
+  const entetes = sites.map(s => `<th>${nomS(s)}</th>`).join("");
+  /* répartitions cumulées */
+  const repG = (champ, titre) => {
+    const M = {};
+    sites.forEach(s => R[s].lignes.forEach(l => { if (l.neutre) return; const cle = l.o[champ] || "Non renseigné"; M[cle] = M[cle] || {}; M[cle][s] = (M[cle][s] || 0) + l.fin; }));
+    const tot = k => sites.reduce((t, s) => t + (M[k][s] || 0), 0);
+    const cles = Object.keys(M).sort((a,b) => tot(b) - tot(a));
+    return `<table class="gt"><thead><tr><th>${titre}</th>${entetes}<th class="gl">Global</th></tr></thead><tbody>
+      ${cles.map(k => `<tr><td>${esc(k)}</td>${sites.map(s => `<td>${eur(M[k][s] || 0)}</td>`).join("")}<td class="gl"><b>${eur(tot(k))}</b></td></tr>`).join("") || `<tr><td colspan="${sites.length + 2}" class="tiny">Aucune donnée.</td></tr>`}</tbody></table>`;
+  };
+  const libCat = Object.fromEntries(TYPES_G);
+  const detail = sites.map(s => R[s].lignes.map(l => `<tr><td>${esc(l.o.nom)}<span class="gsub">${nomS(s)} · ${libCat[l.cat]}</span></td>
+      ${l.neutre ? `<td class="neu" colspan="3">ligne neutre · hors totaux</td>` : `<td>${eur(l.deb)}</td><td><b>${eur(l.fin)}</b></td><td>${eur(l.brut)}</td>`}</tr>`).join("")).join("");
+  const listeNoms = sites.map(nomEtab).join(" + ");
+  el.innerHTML = `
+  <div class="sheet print-page">
+    <div class="eyebrow">${esc([state.organisme.trim(), listeNoms, `Année ${YEAR}`].filter(Boolean).join(" · "))}</div>
+    <h1>CA global ${YEAR} — tous les établissements cumulés</h1>
+    <p class="lead">Montants avec l'absentéisme prévu déduit (brut indiqué à part). Les lignes neutres sont hors totaux. Mis à jour automatiquement à chaque modification.</p>
+    <div class="g-kpis">
+      <div class="kpi tot"><span>CA fin ${YEAR} global · avec absentéisme</span><b>${eur(G.fin)}</b><small>brut ${eur(G.brut)}</small></div>
+      <div class="kpi"><span>CA début ${YEAR} (existant)</span><b>${eur(G.deb)}</b><small>prévisionnel : ${eur(G.fin - G.deb)}</small></div>
+      ${sites.map(s => `<div class="kpi"><span>${nomS(s)}</span><b>${eur(R[s].tot.fin)}</b><small>${partSite(s)} % du global · brut ${eur(R[s].tot.brut)}</small></div>`).join("")}
+    </div>
+    <h2 class="g-h2">Par type de formation</h2>
+    <div class="scroll"><table class="gt"><thead><tr><th>Type</th>${entetes}<th class="gl">Global</th></tr></thead><tbody>
+      ${rowsType}
+      <tr class="tot"><td>Total</td>${sites.map(s => cell(R[s].tot)).join("")}${cell(G, "gl")}</tr>
+      <tr><td>Sans absentéisme (brut)</td>${sites.map(s => `<td>${eur(R[s].tot.brut)}</td>`).join("")}<td class="gl">${eur(G.brut)}</td></tr>
+    </tbody></table></div>
+    <div class="reps">${repG("financeur","Par financeur")}${repG("domaine","Par domaine")}${repG("niveau","Par niveau")}</div>
+    <h2 class="g-h2">Détail des formations</h2>
+    <div class="scroll"><table class="gt"><thead><tr><th>Formation</th><th>Début ${YEAR}</th><th>Fin ${YEAR}</th><th>Fin ${YEAR} brut</th></tr></thead><tbody>${detail || `<tr><td colspan="4" class="tiny">Aucune formation saisie.</td></tr>`}</tbody></table></div>
+  </div>`;
+}
+
+/* ============ Rendu : qui finit quand ============ */
+function renderQF(){
+  const S = state.sites[site];
+  if (!S) { vueSansEtab("view-qf"); return; }
+  const G = {};
+  const push = (d, item) => { const o = item.a || item.f; if (o && o.datesAPreciser) return; const p=parseDate(d); if (p && p.y===YEAR) (G[d]=G[d]||[]).push(item); };
+  S.actions.filter(a=>!a.neutre).forEach(a => push(a.fin, {k:"s", c:"var(--ses)", nom:a.nom, code:a.lieu, a}));
+  const addPeople = (f, c, code) => { const by = {}; f.apprentis.forEach(p => { (by[p.fin]=by[p.fin]||[]).push(p); }); Object.entries(by).forEach(([d, ps]) => push(d, {k:"a", c, nom:f.nom, code, ps})); };
+  S.apprentissage.forEach(f => {
+    if (f.methode === "auto") {
+      if (f.ap26.mode === "global" && globalOk(f.ap26)) push(f.ap26.fin, {k:"t", c:"var(--app)", nom:f.nom, code:f.code + " · " + nb(f.ap26.nb) + " apprentis (prévision)", f});
+      else if (f.ap26.mode === "liste") addPeople(f, "var(--app)", f.code);
+      if (f.ap27.actif && f.ap27.apprentis.length) addPeople({nom:f.nom, apprentis:f.ap27.apprentis}, "var(--app)", f.code + ` · rentrée ${YEAR}`);
+    } else {
+      if (!f.apprentis.length) push(f.fin, {k:"t", c:"var(--app)", nom:f.nom, code:f.code, f});
+      addPeople(f, "var(--app)", f.code);
+    }
+  });
+  S.fondsPrives.forEach(f => {
+    const code = [f.code || f.lieu, "fonds privés"].filter(Boolean).join(" · ");
+    if (parZones(f, "fp")) {
+      if (!f.apprentis.length) push(f.fin, {k:"t", c:"var(--fp)", nom:f.nom, code, f});
+      if (f.ap27 && f.ap27.actif && f.ap27.apprentis.length) addPeople({nom:f.nom, apprentis:f.ap27.apprentis}, "var(--fp)", code + ` · rentrée ${YEAR}`);
+    }
+    else if (!f.neutre) push(f.fin, {k:"s", c:"var(--fp)", nom:f.nom, code, a:f});
+    addPeople(f, "var(--fp)", code);
+  });
+  S.fondsPrivesInd.forEach(f => {
+    const code = [f.lieu, "fonds privés individuels"].filter(Boolean).join(" · ");
+    const conv = x => ({nom: x.nom || "(sans nom)", contrat: x.financement || "financement ?", fin: x.fin});
+    addPeople({nom: f.nom, apprentis: f.stagiaires.map(conv)}, "var(--fpi)", code);
+    addPeople({nom: f.nom, apprentis: f.stagiaires27.map(conv)}, "var(--fpi)", code + ` · rentrée ${YEAR}`);
+  });
+  let body = "";
+  Object.keys(G).sort().forEach(d => {
+    const items = G[d];
+    const n = items.reduce((t,x)=>t+(x.ps?x.ps.length:0),0);
+    items.forEach((x,i) => {
+      let det = "";
+      if (x.k==="s") {
+        const parts=[]; if (parseDate(x.a.examDebut)) parts.push(`${esc(x.a.examLabel||"Épreuves")} du ${court(x.a.examDebut)} au ${court(x.a.examFin)}`);
+        if (parseDate(x.a.bilan)) parts.push("bilan le "+court(x.a.bilan));
+        det = `<div class="tiny"><i>Fin de session</i></div>${parts.length?`<div>${parts.join(" · ")}</div>`:""}`;
+      } else if (x.k==="t") {
+        det = `<div class="tiny"><i>Fin de session</i></div>${parseDate(x.f.examDebut)?`<div>${esc(x.f.examLabel||"Épreuves")} les ${court(x.f.examDebut)} et ${court(x.f.examFin)}</div>`:""}`;
+      } else {
+        det = x.ps.map(p=>`<span class="chip">${esc(p.nom)}<small>${esc(p.contrat)}</small></span>`).join("");
+      }
+      body += `<tr class="${i===0?"first":""}">
+        <td style="width:15%">${i===0?`<div class="qd">${longDate(d)}</div><div class="tiny">${jour(d)}</div>${n?`<div class="tiny"><b>${n} personne${n>1?"s":""}</b></div>`:""}`:""}</td>
+        <td style="width:28%"><span class="dot" style="background:${x.c}"></span><b>${esc(x.nom)}</b><div class="tiny" style="margin-left:15px">${esc(x.code)}</div></td>
+        <td>${det}</td></tr>`;
+    });
+  });
+  if (!body) body = `<tr><td colspan="3" class="tiny">Aucune fin en ${YEAR}.</td></tr>`;
+
+  const apres = [], avant = [];
+  /* personnes d'une même formation avec la même date de fin : regroupées sur une ligne */
+  const peopleHors = f => {
+    const grp = {};
+    f.apprentis.forEach(ap => { const q=parseDate(ap.fin); if (!q || q.y === YEAR) return; (grp[ap.fin] = grp[ap.fin] || {q, noms:[]}).noms.push(esc(ap.nom)); });
+    Object.keys(grp).sort().forEach(d => { const g = grp[d]; const t = `${g.noms.join(", ")} · ${esc(f.nom)} · fin le ${full(d)}`; (g.q.y > YEAR ? apres : avant).push(t); });
+  };
+  S.actions.forEach(a => { const p=parseDate(a.fin); if (p && p.y>YEAR) apres.push(`${esc(a.nom)} · fin le ${full(a.fin)}`); });
+  S.apprentissage.forEach(f => {
+    const p = parseDate(f.fin);
+    if (!f.apprentis.length && p && p.y>YEAR) apres.push(`${esc(f.nom)} · ${esc(f.code)}${parseDate(f.examDebut)?` · ${esc(f.examLabel||"Épreuves")} les ${court(f.examDebut)} et ${full(f.examFin)}`:` · fin le ${full(f.fin)}`}`);
+    peopleHors(f);
+    if (f.ap27 && f.ap27.actif && f.ap27.apprentis.length) peopleHors({nom: f.nom + ` (rentrée ${YEAR})`, apprentis: f.ap27.apprentis});
+  });
+  S.fondsPrives.forEach(f => { const p=parseDate(f.fin); if (p && p.y>YEAR && (f.mode!=="stagiaire" || !f.apprentis.length)) apres.push(`${esc(f.nom)} (fonds privés) · fin le ${full(f.fin)}`); peopleHors(f); });
+  S.fondsPrivesInd.forEach(f => peopleHors({nom: f.nom + " (fonds privés individuels)", apprentis: [...f.stagiaires, ...f.stagiaires27].map(x => ({nom: x.nom || "(sans nom)", fin: x.fin}))}));
+  const aPreciser = lignes(S).filter(({o}) => o.datesAPreciser).map(({o, cat}) => `${esc(o.nom)} · ${cat==="actions"?"action":cat==="fp"?"fonds privés":"apprentissage"}${o.observations?" · "+esc(o.observations):""}`);
+  const notes = (S.notesHors||"").split("\n").map(t=>t.trim()).filter(Boolean).map(esc);
+  const avantAll = [...avant, ...notes];
+  const hors = (apres.length||avantAll.length) ? `
+    <h2 style="margin-top:22px">Hors ${YEAR}</h2>
+    ${apres.length?`<div class="tiny"><b>Fins après ${YEAR}</b></div><ul class="hors">${apres.map(t=>`<li>${t}</li>`).join("")}</ul>`:""}
+    ${avantAll.length?`<div class="tiny" style="margin-top:8px"><b>Fins avant ${YEAR} et remarques</b></div><ul class="hors">${avantAll.map(t=>`<li>${t}</li>`).join("")}</ul>`:""}` : "";
+  const preciser = aPreciser.length ? `<h2 style="margin-top:22px">Dates à préciser</h2><div class="tiny">Lignes cochées « Dates à préciser », sans dates de début et de fin : elles n'apparaissent pas dans la liste ci-dessus.</div><ul class="hors">${aPreciser.map(t=>`<li>${t}</li>`).join("")}</ul>` : "";
+
+  document.getElementById("view-qf").innerHTML = `
+  <div class="sheet print-page">
+    <div class="eyebrow">${esc(eyebrow(site))}</div>
+    <h1>Qui finit quand — fins ${YEAR} ${esc(nomEtab(site))}</h1>
+    <p class="lead">Regroupé par date de fin commune, puis par formation.</p>
+    <table class="qf"><thead><tr><th>Date de fin</th><th>Formation</th><th>Personnes / détails</th></tr></thead><tbody>${body}</tbody></table>
+    ${hors}
+    ${preciser}
+  </div>`;
+}
+
+/* ============ Rendu : édition ============ */
+function fld(label, path, value, opt={}){
+  const id = "f-"+path.replace(/\./g,"-") + (opt.idSuffix ? "-"+opt.idSuffix : "");
+  const type = opt.type || "text";
+  let input;
+  if (type==="checkbox") return `<label class="chk"><input type="checkbox" id="${id}" data-path="${path}" data-type="bool" ${value?"checked":""}> ${label}</label>`;
+  if (type==="select") {
+    let options = opt.options.slice();
+    if (opt.blank) options.unshift(["", "—"]);
+    if (value && !options.some(([v]) => v === value)) options.push([value, value]);
+    input = `<select id="${id}" data-path="${path}" data-type="${opt.rerender?"select":"selectq"}">${options.map(([v,t])=>`<option value="${esc(v)}" ${v===value?"selected":""}>${esc(t)}</option>`).join("")}</select>`;
+  }
+  else if (type==="date") input = `<input type="date" id="${id}" data-path="${path}" data-type="date" value="${esc(value)}">`;
+  else if (type==="number") input = `<input type="text" inputmode="decimal" id="${id}" data-path="${path}" data-type="number" ${opt.optional?'data-optional="1"':""} value="${isNum(value)?esc(String(value).replace(".",",")):""}" placeholder="${opt.optional?(opt.placeholder||"non communiqué"):""}">`;
+  else if (type==="textarea") input = `<textarea id="${id}" data-path="${path}" data-type="text" rows="${opt.rows||4}">${esc(value)}</textarea>`;
+  else input = `<input type="text" id="${id}" data-path="${path}" data-type="text" value="${esc(value)}">`;
+  return `<div class="f ${opt.wide?"wide":""} ${opt.wide2?"wide2":""}"><label for="${id}">${label}</label>${input}${opt.hint?`<div class="hint" id="${id}-hint">${opt.hint}</div>`:""}<div class="msg" id="${id}-msg"></div></div>`;
+}
+const opts = arr => arr.map(v => [v, v]);
+const CATS = {a:{list:"actions", cat:"actions", titre:"Action"}, p:{list:"apprentissage", cat:"apprentissage", titre:"Apprentissage"}, f:{list:"fondsPrives", cat:"fp", titre:"Fonds privés"}, i:{list:"fondsPrivesInd", cat:"fpi", titre:"Fonds privés individuels"}};
+let sel = "a0";
+function selObjet(){
+  const S = state.sites[site];
+  if (sel === "notes") return {key:"notes"};
+  const c = CATS[sel[0]]; const i = Number(sel.slice(1));
+  if (!c || !S[c.list][i]) return null;
+  return {key:sel, o:S[c.list][i], cat:c.cat, list:c.list, i, p:`${c.list}.${i}`, kind:sel[0]};
+}
+function validerSel(){
+  if (selObjet()) return;
+  const S = state.sites[site];
+  sel = S.actions.length ? "a0" : S.apprentissage.length ? "p0" : S.fondsPrives.length ? "f0" : S.fondsPrivesInd.length ? "i0" : "notes";
+}
+
+/* Résumés */
+function resumeCarte(o, cat){
+  if (sansInfo(o, cat)) return "pas de CA";
+  if (cat === "fpi") return eur(calcFPI(o).tot * coef(o));
+  const c = calcBrut(o, cat), k = coef(o);
+  if (estNeutre(o, cat)) return (o.methode === "matrice" || o.methode === "bdc") ? eur(calcMatrice(o).tot) + " (neutre)" : eur(o.methode === "dates" ? sessionEnCours(o).montant : o.montant) + " (neutre)";
+  if (o.methode !== "matrice" && (cat === "apprentissage" || (cat === "fp" && o.mode === "stagiaire")) && c.sansPec) return cat === "fp" ? "Prix non communiqué" : "PEC non communiquée";
+  return eur(c.tot * k);
+}
+function sousTitre(o, cat){
+  if (cat === "fpi") { const n = o.stagiaires.length + o.stagiaires27.length; return [o.lieu, `${n} stagiaire${n>1?"s":""}`, o.stagiaires27.length ? `rentrée ${YEAR}` : ""].filter(Boolean).join(" · "); }
+  const m = o.methode === "matrice" ? "matrice" : (o.methode === "bdc" ? "heures BDC" : (o.methode === "dates" ? (o.r27 && o.r27.actif ? `rentrée ${YEAR}` : "") : ""));
+  if (cat === "actions") return [o.lieu, "fin " + (o.datesAPreciser ? "à préciser" : (full(o.fin)||"?")), o.neutre ? "neutre" : "", m].filter(Boolean).join(" · ");
+  const n = o.apprentis.length;
+  if (cat === "apprentissage") return [o.code, `${n} apprenti${n>1?"s":""}`, m].filter(Boolean).join(" · ");
+  return [o.methode === "matrice" ? "matrice" : o.methode === "bdc" ? "heures" : o.methode === "dates" ? "dates et montant" : (o.mode !== "stagiaire" ? "montant global" : "par stagiaire"), `${n} stagiaire${n>1?"s":""}`].join(" · ");
+}
+function previewHTML(o, cat){
+  return `<div class="scroll"><table class="ca mini">
+    <colgroup><col style="width:17%"><col style="width:9.5%">${'<col style="width:4.9%">'.repeat(12)}<col style="width:14.7%"></colgroup>
+    <thead><tr><th style="text-align:left">Formation</th><th class="num">Début ${YEAR}</th>${MOIS.map(m=>`<th class="m">${m}</th>`).join("")}<th class="num">Fin ${YEAR}</th></tr></thead>
+    <tbody>${rowFor(o, cat)}</tbody></table></div>`;
+}
+
+/* Durées */
+const somme = (arr, a, b) => arr.slice(a, b).reduce((t,v) => t + (isNum(v) ? v : 0), 0);
+function dureesResume(o){
+  const c1 = somme(o.planC,0,8), c2 = somme(o.planC,8,12), e = somme(o.planE,0,12);
+  return {c1, c2, c:c1+c2, e};
+}
+function dureeTxt(o){
+  const parts = [];
+  if (isNum(o.bdcHeures)) parts.push(`centre ${nb(o.bdcHeures)} h`);
+  if (isNum(o.hEnt)) parts.push(`entreprise ${nb(o.hEnt)} h`);
+  return parts.join(" · ");
+}
+function secDurees(o, p){
+  const d = dureesResume(o);
+  const cell = (arr, k, m) => { const id = `f-${p.replace(/\./g,"-")}-${arr}-${m}`; const v = o[arr][m];
+    return `<td><input type="text" inputmode="decimal" id="${id}" aria-label="${arr==="planC"?"Centre":"Entreprise"} ${MOIS[m]}" data-path="${p}.${arr}.${m}" data-type="number" data-optional="1" value="${isNum(v)?esc(String(v).replace(".",",")):""}" placeholder="—"></td>`; };
+  const tot = isNum(o.bdcHeures) && isNum(o.hEnt) ? o.bdcHeures + o.hEnt : null;
+  const peutReporter = o.methode === "bdc" || o.methode === "matrice";
+  return `
+    <div class="dur-cards">
+      <div class="dur c">${fld("Heures en centre (parcours)", p+".bdcHeures", o.bdcHeures, {type:"number", optional:true, placeholder:"—"})}</div>
+      <div class="dur e">${fld("Heures en entreprise (parcours)", p+".hEnt", o.hEnt, {type:"number", optional:true, placeholder:"—"})}</div>
+      <div class="dur t"><div class="f"><label>Durée totale du parcours</label><div class="dur-v" id="dur-tot">${tot!==null ? nb(tot)+" h" : "—"}</div>
+        <div class="hint" id="dur-rep">${tot ? `${Math.round(o.bdcHeures/tot*100)} % en centre · ${Math.round(o.hEnt/tot*100)} % en entreprise` : "Renseignez les heures centre et entreprise"}</div></div></div>
+    </div>
+    <div class="sub">Planning ${YEAR} mois par mois (heures)</div>
+    <div class="scroll"><table class="plan">
+      <thead><tr><th></th>${MOIS.map((m,i)=>`<th class="${i===8?"sep":""}">${m}</th>`).join("")}<th>Total ${YEAR}</th></tr></thead>
+      <tbody>
+        <tr class="rc"><th>Centre</th>${MOIS.map((_,m)=>cell("planC","c",m).replace("<td>", m===8?'<td class="sep">':"<td>")).join("")}<td class="num" id="plan-tc"><b>${nb(d.c)} h</b></td></tr>
+        <tr class="re"><th>Entreprise</th>${MOIS.map((_,m)=>cell("planE","e",m).replace("<td>", m===8?'<td class="sep">':"<td>")).join("")}<td class="num" id="plan-te"><b>${nb(d.e)} h</b></td></tr>
+        <tr class="rt"><th>Total</th>${MOIS.map((_,m)=>`<td class="num ${m===8?"sep":""}" id="plan-m${m}">${totalMoisTxt(o,m)}</td>`).join("")}<td class="num" id="plan-tt"><b>${nb(d.c+d.e)} h</b></td></tr>
+      </tbody></table></div>
+    <div class="plan-foot">
+      <span id="plan-per">${planPerTxt(d)}</span>
+      <span class="plan-btns"><button type="button" class="btn small" data-act="recaler">Recalculer selon les dates et le parcours</button>
+      ${peutReporter ? `<button type="button" class="btn small" data-act="report-heures">Reporter ces heures centre dans le calcul du CA</button>` : ""}</span>
+    </div>
+    <div class="plan-ecart warn tiny" id="plan-ecart">${ecartTxt(o)}</div>`;
+}
+
+function ecartTxt(o){
+  const out = [];
+  const w = fenetre2027(o);
+  [["planC","centre", o.bdcHeures],["planE","entreprise", o.hEnt]].forEach(([arr, lib, total]) => {
+    const somme12 = o[arr].reduce((t,x) => t + (isNum(x) ? x : 0), 0);
+    if (w) {
+      const hors = o[arr].map((x,m) => (isNum(x) && x > 0 && (m < w.m0 || m > w.m1)) ? MOIS[m] : null).filter(Boolean);
+      if (hors.length) out.push(`${lib} : des heures sont placées hors de la période de formation (${hors.join(", ")})`);
+    }
+    if (isNum(total) && somme12 > total + 0.5) out.push(`${lib} : le planning ${YEAR} (${nb(somme12)} h) dépasse les heures du parcours (${nb(total)} h)`);
+  });
+  return out.length ? "À vérifier — " + out.join(" · ") + ". Cliquez sur « Recalculer selon les dates et le parcours » pour corriger." : "";
+}
+function totalMoisTxt(o, m){ const c = o.planC[m], e = o.planE[m]; return (isNum(c) || isNum(e)) ? nb((isNum(c)?c:0) + (isNum(e)?e:0)) : "—"; }
+function planPerTxt(d){
+  const t = d.c + d.e;
+  return `Centre janv.-août : <b>${nb(d.c1)} h</b> · sept.-déc. : <b>${nb(d.c2)} h</b>` + (t ? ` · Répartition ${YEAR} : <b>${Math.round(d.c/t*100)} % centre</b> · <b>${Math.round(d.e/t*100)} % entreprise</b>` : "");
+}
+/* ============ Année N-1 ============ */
+function moisEnAnnee(debut, fin, an){
+  const f = parseDate(fin); if (!f || f.y < an) return 0;
+  const d = parseDate(debut);
+  const startM = (!d || d.y < an) ? 1 : (d.y > an ? 13 : d.m);
+  const endM = f.y > an ? 12 : f.m;
+  return Math.max(0, endM - startM + 1);
+}
+function normY26(y){
+  y = y && typeof y === "object" ? y : {};
+  return {planC: plan12(y.planC), planE: plan12(y.planE), eff: numOrNull(y.eff), heures: numOrNull(y.heures), tarif: numOrNull(y.tarif),
+    forfait: numOrNull(y.forfait), caSaisi: numOrNull(y.caSaisi), mois: numOrNull(y.mois)};
+}
+/* CA brut N-1 d'une ligne */
+function calc2026(o, cat){
+  if (sansInfo(o, cat) || estNeutre(o, cat)) return {tot:0, vide: sansInfo(o, cat)};
+  const y = o.y26;
+  if (o.methode === "bdc" || o.methode === "matrice") return {tot: caPeriode(y)};
+  const parPersonne = cat === "apprentissage" || (cat === "fp" && o.mode === "stagiaire");
+  if (parPersonne) {
+    let t = 0; o.apprentis.forEach(p => { const m = moisEnAnnee(p.debut, p.fin, Y26); if (m > 0 && isNum(p.pec)) t += p.pec * m / 12; });
+    return {tot: t, parPersonne: true};
+  }
+  const duree = isNum(o.duree) && o.duree > 0 ? o.duree : 0;
+  return {tot: duree && isNum(o.montant) && isNum(y.mois) ? o.montant * y.mois / duree : 0};
+}
+function sommeAn(arr){ return arr.reduce((t,x) => t + (isNum(x) ? x : 0), 0); }
+
+/* Planning mois par mois générique (N-1 ou N) */
+function grille(o, p, an, y){
+  const src = an === (YEAR-1) ? o.y26 : o;
+  const base = an === (YEAR-1) ? p + ".y26" : p;
+  const idp = an === (YEAR-1) ? "p26" : "plan";
+  const cell = (arr, m) => { const id = `f-${base.replace(/\./g,"-")}-${arr}-${m}`; const v = src[arr][m];
+    return `<td class="${m===8?"sep":""}"><input type="text" inputmode="decimal" id="${id}" aria-label="${arr==="planC"?"Centre":"Entreprise"} ${MOIS[m]} ${an}" data-path="${base}.${arr}.${m}" data-type="number" data-optional="1" value="${isNum(v)?esc(String(v).replace(".",",")):""}" placeholder="—"></td>`; };
+  const tm = m => { const c = src.planC[m], e = src.planE[m]; return (isNum(c) || isNum(e)) ? nb((isNum(c)?c:0) + (isNum(e)?e:0)) : "—"; };
+  const tc = sommeAn(src.planC), te = sommeAn(src.planE);
+  return `<div class="scroll"><table class="plan">
+      <thead><tr><th></th>${MOIS.map((m,i)=>`<th class="${i===8?"sep":""}">${m}</th>`).join("")}<th>Total ${an}</th></tr></thead>
+      <tbody>
+        <tr class="rc"><th>Centre</th>${MOIS.map((_,m)=>cell("planC",m)).join("")}<td class="num" id="${idp}-tc"><b>${nb(tc)} h</b></td></tr>
+        <tr class="re"><th>Entreprise</th>${MOIS.map((_,m)=>cell("planE",m)).join("")}<td class="num" id="${idp}-te"><b>${nb(te)} h</b></td></tr>
+        <tr class="rt"><th>Total</th>${MOIS.map((_,m)=>`<td class="num ${m===8?"sep":""}" id="${idp}-m${m}">${tm(m)}</td>`).join("")}<td class="num" id="${idp}-tt"><b>${nb(tc+te)} h</b></td></tr>
+      </tbody></table></div>`;
+}
+function bilanHeures(o){
+  const c26 = sommeAn(o.y26.planC), c27 = sommeAn(o.planC), e26 = sommeAn(o.y26.planE), e27 = sommeAn(o.planE);
+  const lignes = [];
+  const trop = (t, parcours) => isNum(parcours) && t > parcours + 0.5 ? ` <span class="warn">— dépasse le parcours de ${nb(t - parcours)} h</span>` : "";
+  lignes.push(`Centre : ${YEAR-1} = <b>${nb(c26)} h</b> · ${YEAR} = <b>${nb(c27)} h</b> · total = <b>${nb(c26+c27)} h</b>${isNum(o.bdcHeures) ? ` sur ${nb(o.bdcHeures)} h de parcours` : ""}${trop(c26+c27, o.bdcHeures)}`);
+  lignes.push(`Entreprise : ${YEAR-1} = <b>${nb(e26)} h</b> · ${YEAR} = <b>${nb(e27)} h</b> · total = <b>${nb(e26+e27)} h</b>${isNum(o.hEnt) ? ` sur ${nb(o.hEnt)} h de parcours` : ""}${trop(e26+e27, o.hEnt)}`);
+  return lignes.join("<br>");
+}
+function secDurees2026(o, p){
+  return `<div class="plan-foot" style="margin-top:4px"><span id="p26-bilan">${bilanHeures(o)}</span></div>
+    <div class="sub">Planning ${YEAR-1} mois par mois (heures)</div>${grille(o, p, (YEAR-1))}
+    <div class="plan-foot"><span id="p26-per">Centre ${YEAR-1} : <b>${nb(sommeAn(o.y26.planC))} h</b> · entreprise ${YEAR-1} : <b>${nb(sommeAn(o.y26.planE))} h</b></span>
+      ${(o.methode === "bdc" || o.methode === "matrice") ? `<button type="button" class="btn small" data-act="report-26">Reporter ces heures centre dans le calcul du CA ${YEAR-1}</button>` : ""}</div>`;
+}
+function ca26Txt(o, cat){
+  const c = calc2026(o, cat), k = coefMinore(o);
+  if (c.vide) return "pas de CA (aucune information du bon de commande)";
+  if (estNeutre(o, cat)) return "ligne neutre · hors totaux";
+  return `CA ${YEAR-1} : <b>${eur(c.tot*k)}</b> avec absentéisme (brut ${eur(c.tot)})`;
+}
+function secCalcul2026(o, p, cat){
+  const y = o.y26, q = p + ".y26";
+  let h = `<div class="ca26" id="ca26-txt">${ca26Txt(o, cat)}</div>`;
+  if (o.methode === "bdc" || o.methode === "matrice") {
+    const bdc = o.methode === "bdc";
+    h += `<div class="per"><div class="per-t">Année ${YEAR-1}</div><div class="fields">
+      ${fld("Stagiaires", q+".eff", y.eff, {type:"number", optional:true, placeholder:"—"})}
+      ${fld(`Heures centre ${YEAR-1}`, q+".heures", y.heures, {type:"number", optional:true, placeholder:"—"})}
+      ${fld(bdc ? "Prix du marché (€/h)" : "Tarif heure stagiaire (€)", q+".tarif", y.tarif, {type:"number", optional:true, placeholder:"—"})}
+      ${bdc ? "" : fld("Forfait (€)", q+".forfait", y.forfait, {type:"number", optional:true, placeholder:"—"})}
+      ${fld("CA saisi (€) — remplace le calcul", q+".caSaisi", y.caSaisi, {type:"number", optional:true, placeholder:"vide = calcul"})}
+    </div>${bdc ? `<div class="row-actions"><button type="button" class="btn small" data-act="copy-bdc-26">Reprendre stagiaires et prix du bon de commande</button></div>` : ""}</div>`;
+  } else if (cat === "apprentissage" || (cat === "fp" && o.mode === "stagiaire")) {
+    h += `<p class="sec-n">Calcul automatique : ${cat === "fp" ? "prix" : "PEC"} annuel(le) × mois de contrat en ${YEAR-1} / 12, pour chaque personne (voir la liste ci-dessous).</p>`;
+  } else {
+    h += `<div class="fields">${fld(`Mois comptés en ${YEAR-1}`, q+".mois", y.mois, {type:"number", optional:true, placeholder:"—", hint:`D'après les dates : ${moisEnAnnee(o.debut, o.fin, Y26)} mois · durée ${nb(o.duree)} mois · montant ${eur(o.montant)}`})}</div>`;
+  }
+  return h;
+}
+function personnes2026(o, cat){
+  const lbl = cat === "fp" ? "Prix" : "PEC";
+  const rows = o.apprentis.map(ap => { const m = moisEnAnnee(ap.debut, ap.fin, Y26); const ca = isNum(ap.pec) ? ap.pec * m / 12 : null;
+    return `<tr><td>${esc(ap.nom) || "<i>sans nom</i>"}</td><td>${esc(ap.contrat)}</td><td>${full(ap.debut)}</td><td>${full(ap.fin)}</td><td class="num">${isNum(ap.pec)?eur(ap.pec):"—"}</td><td class="num">${m}</td><td class="num">${ca!==null?eur(ca):"—"}</td></tr>`; }).join("");
+  return `<div class="scroll"><table class="ap ro"><thead><tr><th>Nom Prénom</th><th>N°</th><th>Début</th><th>Fin</th><th class="num">${lbl} €/an</th><th class="num">Mois ${YEAR-1}</th><th class="num">CA ${YEAR-1}</th></tr></thead>
+    <tbody>${rows || `<tr><td colspan="7" class="tiny">Personne n'est nommé.</td></tr>`}</tbody></table></div>
+    <p class="sec-n">Les noms, dates et ${lbl} se modifient dans l'onglet ${YEAR} (mêmes personnes).</p>`;
+}
+
+/* ============ Sessions : session en cours + rentrée N (calcul automatique au prorata des mois) ============ */
+/* Un mois est compté s'il contient au moins la moitié de ses jours en formation */
+function joursMois(y, m){ return new Date(Date.UTC(y, m, 0)).getUTCDate(); } /* m = 1..12 */
+function moisComptes(debut, fin){
+  const d = parseDate(debut), f = parseDate(fin);
+  if (!d || !f || fin < debut) return null;
+  const res = {total:0, an:0, mois2027:[]};
+  let y = d.y, m = d.m;
+  const td = Date.UTC(d.y, d.m-1, d.d), tf = Date.UTC(f.y, f.m-1, f.d);
+  while (y < f.y || (y === f.y && m <= f.m)) {
+    const nbj = joursMois(y, m);
+    const a = Math.max(td, Date.UTC(y, m-1, 1)), b = Math.min(tf, Date.UTC(y, m-1, nbj));
+    const couverts = Math.round((b - a) / 864e5) + 1;
+    if (couverts * 2 >= nbj) { res.total++; if (y === YEAR) { res.an++; res.mois2027.push(m-1); } }
+    m++; if (m > 12) { m = 1; y++; }
+  }
+  if (res.total === 0) { res.total = 1; if (d.y === YEAR || f.y === YEAR) { res.an = 1; res.mois2027.push((f.y === YEAR ? f.m : d.m) - 1); } }
+  return res;
+}
+function normR27(r){
+  r = r && typeof r === "object" ? r : {};
+  return {actif: !!r.actif, debut: str(r.debut, `${YEAR}-09-01`), fin: str(r.fin, ""), stag: numOrNull(r.stag), heures: numOrNull(r.heures),
+    hEnt: numOrNull(r.hEnt), prix: numOrNull(r.prix), montant: numOrNull(r.montant)};
+}
+function montantSession(stag, heures, prix, manuel){
+  if (isNum(stag) && isNum(heures) && isNum(prix)) return {v: Math.round(stag * heures * prix * 100) / 100, calc:true};
+  if (isNum(manuel) && manuel > 0) return {v: manuel, calc:false};
+  return {v: null, calc:false};
+}
+function sessionEnCours(o){
+  const m = montantSession(o.bdcStag, o.bdcHeures, o.bdcPrix, o.montant);
+  const mc = moisComptes(o.debut, o.fin);
+  const ca = m.v !== null && mc ? m.v * mc.an / mc.total : 0;
+  return {montant: m.v, calc: m.calc, mc, ca};
+}
+function sessionRentree(o){
+  const r = o.r27;
+  if (!r.actif) return {actif:false, ca:0, montant:null, mc:null};
+  const m = montantSession(r.stag, r.heures, r.prix, r.montant);
+  const mc = moisComptes(r.debut, r.fin);
+  const ca = m.v !== null && mc ? m.v * mc.an / mc.total : 0;
+  return {actif:true, montant: m.v, calc: m.calc, mc, ca};
+}
+function calcDates(o){
+  const a = sessionEnCours(o), b = sessionRentree(o);
+  return {cur: a.ca, prev: b.ca, tot: a.ca + b.ca, ok: true, a, b};
+}
+function ratioTxt(mc){ return mc ? `${mc.an}/${mc.total} mois` : "dates à saisir"; }
+function finLabel(dateStr){ const p = parseDate(dateStr); return p ? MOISC[p.m-1] + " " + p.y : ""; }
+
+/* Ligne de la time line pour une action calculée par les dates */
+function datesRow(o, col, cat){
+  const c0 = calcDates(o), k = coef(o), neutre = !!o.neutre;
+  const a = c0.a, b = c0.b;
+  const c = neutre ? {cur:0, prev:b.ca, tot:b.ca} : c0, rentreeOk = neutre && rentreeComptee(o);
+  const moisA = new Set(a.mc ? a.mc.mois2027 : []);
+  const moisB = new Set(b.actif && b.mc ? b.mc.mois2027 : []);
+  const e = monthIdx(o.fin), bi = monthIdx(o.bilan), ex = monthIdx(o.examDebut);
+  const rs = b.actif ? monthIdx(o.r27.debut) : null, rf = b.actif ? monthIdx(o.r27.fin) : null;
+  const curCls = neutre ? "cur-n" : col.cls;
+  const cells = cellsFor(m => {
+    let cls = "", txt = "";
+    if (moisA.has(m) || (e !== null && e === m && e >= 0 && e < 12)) cls = curCls;
+    if (bi === m && m !== e) txt = "Bilan " + court(o.bilan);
+    if (ex === m && m !== e) txt = esc(o.examLabel || "Épr.") + " " + court(o.examDebut);
+    if (e === m) txt = "■ Fin " + court(o.fin);
+    if (e === 12 && m === 11) txt = "→ " + full(o.fin);
+    if (b.actif && (moisB.has(m) || (rs !== null && rs === m && rs >= 0 && rs < 12))) {
+      cls = neutre && !rentreeOk ? "cur-n" : "nw";
+      if (m === rs) txt = "Début " + court(o.r27.debut) + (isNum(o.r27.stag) ? "<br>" + nb(o.r27.stag) + " stag." : "");
+      else if (m === 11 && rf === 12) txt = "→ " + finLabel(o.r27.fin);
+      else if (m === rf) txt = "■ Fin " + court(o.r27.fin);
+    }
+    return {cls, txt};
+  });
+  const brut = (v) => affichage === "minore" && coefMinore(o) < 1 ? `<div class="tiny num">brut ${eur(v)} − ${nb(o.absent)} % absentéisme</div>` : "";
+  const left = neutre
+    ? `<div class="big num">${eur(a.montant)}</div><div class="tiny num">montant · ligne neutre</div>`
+    : (a.montant === null ? `<div class="big num">—</div><div class="tiny num">session en cours non renseignée</div>`
+      : `<div class="big num" style="color:${col.c}">${eur(c.cur*k)}</div><div class="tiny num">${eur(a.montant)} × ${ratioTxt(a.mc)}</div>${brut(c.cur)}`);
+  const right = neutre && !rentreeOk
+    ? `<div class="big num">—</div><div class="tiny num">${b.actif ? `rentrée ${YEAR} : informations à saisir` : "non compté dans les totaux"}</div>`
+    : neutre
+    ? `<div class="big num">${eur(c.tot*k)}</div><div class="tiny num" style="color:var(--new)">rentrée ${YEAR} ${eur(c.prev*k)} (${eur(b.montant)} × ${ratioTxt(b.mc)}) · session en cours neutre</div>` + brut(c.tot)
+    : `<div class="big num">${eur(c.tot*k)}</div>` + (b.actif
+        ? (b.montant === null ? `<div class="warn tiny num">rentrée ${YEAR} : informations à saisir</div>` : `<div class="tiny num" style="color:var(--new)">dont rentrée ${YEAR} ${eur(c.prev*k)} (${eur(b.montant)} × ${ratioTxt(b.mc)})</div>`)
+        : `<div class="tiny num">pas de rentrée ${YEAR} prévue</div>`) + brut(c.tot);
+  const sub = esc([o.lieu, o.bdc ? (cat==="fp"?"Convention ":"BDC ") + o.bdc : "", a.montant !== null ? eur(a.montant) : ""].filter(Boolean).join(" · "));
+  return `<tr class="${neutre && !rentreeOk?"neutral":""}"><td><div class="fname">${esc(o.nom)}</div><div class="fsub">${sub}</div><div class="fsub">${esc(classTxt(o))}</div></td>
+    <td class="money">${left}</td>${cells}<td class="money">${right}</td></tr>`;
+}
+
+/* Zones de saisie identiques : session en cours et rentrée N */
+function zoneSession(o, p, cat, quoi){
+  const enCours = quoi === "cours";
+  const q = enCours ? p : p + ".r27";
+  const src = enCours ? {debut:o.debut, fin:o.fin, stag:o.bdcStag, heures:o.bdcHeures, hEnt:o.hEnt, prix:o.bdcPrix, montant:o.montant}
+                      : {debut:o.r27.debut, fin:o.r27.fin, stag:o.r27.stag, heures:o.r27.heures, hEnt:o.r27.hEnt, prix:o.r27.prix, montant:o.r27.montant};
+  const k = enCours ? {stag:"bdcStag", heures:"bdcHeures", hEnt:"hEnt", prix:"bdcPrix"} : {stag:"stag", heures:"heures", hEnt:"hEnt", prix:"prix"};
+  const opt = {type:"number", optional:true, placeholder:"—", idSuffix:"z"};
+  const s = enCours ? sessionEnCours(o) : sessionRentree(o);
+  const actif = enCours || o.r27.actif;
+  const ms = montantSession(src.stag, src.heures, src.prix, src.montant);
+  const montantHTML = ms.calc
+    ? `<div class="f"><label>Montant TTC (calculé)</label><div class="dur-v" id="z-${quoi}-montant">${eur(ms.v)}</div><div class="hint">parcours × heures centre × prix</div></div>`
+    : fld("Montant TTC (€)", q+".montant", src.montant, {type:"number", optional:true, placeholder:"—", idSuffix:"z", hint:"à la main si parcours, heures ou prix manquent"});
+  const res = `<div class="zres" id="z-${quoi}-res">${zoneResultat(o, quoi)}</div>`;
+  return `<div class="zone ${enCours?"zc":"zr"} ${actif?"":"off"}">
+    ${enCours ? "" : `<div class="chks" style="margin-bottom:6px">${fld(`Rentrée ${YEAR} prévue`, q+".actif", o.r27.actif, {type:"checkbox"})}</div>`}
+    <div class="fields">
+      ${fld("Date de début", q+".debut", src.debut, {type:"date", idSuffix:"z"})}
+      ${fld("Date de fin", q+".fin", src.fin, {type:"date", idSuffix:"z"})}
+      ${fld("Nombre de parcours", q+"."+k.stag, src.stag, opt)}
+      ${fld("Nombre d'heures centre", q+"."+k.heures, src.heures, opt)}
+      ${fld("Nombre d'heures entreprise", q+"."+k.hEnt, src.hEnt, opt)}
+      ${fld("Prix unitaire du marché (€/h)", q+"."+k.prix, src.prix, opt)}
+      ${montantHTML}
+    </div>${res}</div>`;
+}
+function zoneResultat(o, quoi){
+  const s = quoi === "cours" ? sessionEnCours(o) : sessionRentree(o);
+  const kk = coefMinore(o);
+  if (quoi !== "cours" && !o.r27.actif) return `<span class="tiny">Cochez « Rentrée ${YEAR} prévue » pour l'ajouter à la time line et au prévisionnel.</span>`;
+  if (!s.mc) return `<span class="warn">Saisissez les dates de début et de fin (la fin doit être après le début).</span>`;
+  if (s.montant === null) return `<span class="warn">Saisissez le nombre de parcours, les heures centre et le prix (ou un montant).</span>`;
+  const moisTxt = s.mc.mois2027.length ? s.mc.mois2027.map(m => MOISC[m]).join(", ") : "aucun";
+  if (quoi === "cours" && o.neutre) return `<b>${s.mc.an} mois en ${YEAR}</b> sur ${s.mc.total} mois de formation · montant ${eur(s.montant)} · <b>ligne neutre : session en cours non comptée dans les totaux</b>${o.r27 && o.r27.actif ? ` (la rentrée ${YEAR} est comptée)` : ""}`;
+  return `<b>${s.mc.an} mois en ${YEAR}</b> sur ${s.mc.total} mois de formation (${moisTxt}) · CA ${YEAR} = ${eur(s.montant)} × ${s.mc.an}/${s.mc.total} = <b>${eur(s.ca)}</b> brut · <b>${eur(s.ca*kk)}</b> avec ${nb(o.absent)} % d'absentéisme
+    <div class="tiny">Un mois est compté s'il contient au moins 15 jours de formation.</div>`;
+}
+
+/* ============ Apprentissage : promotion en cours + rentrée N (liste nominative ou prévision globale) ============ */
+function normZoneAppr(z, def){
+  z = z && typeof z === "object" ? z : def;
+  return {actif: z.actif !== undefined ? !!z.actif : true, mode: z.mode === "global" ? "global" : "liste",
+    debut: str(z.debut, ""), fin: str(z.fin, ""), nb: numOrNull(z.nb), pec: numOrNull(z.pec),
+    apprentis: Array.isArray(z.apprentis) ? z.apprentis.map(p => ({nom: str(p && p.nom,""), contrat: str(p && p.contrat,""), debut: str(p && p.debut,""), fin: str(p && p.fin,""), pec: p && isNum(p.pec) ? p.pec : null})) : []};
+}
+function parZones(o, cat){ return o.methode === "auto" && (cat === "apprentissage" || (cat === "fp" && o.mode === "stagiaire")); }
+function caListe(list){ let t = 0, manq = 0; list.forEach(p => { const m = moisEn2027(p.debut, p.fin); if (m > 0) { if (isNum(p.pec)) t += p.pec * m / 12; else manq++; } }); return {t, manq}; }
+function moisGlobal(z){ return moisEn2027(z.debut, z.fin || `${YEAR}-12-31`); }
+function globalOk(z){ return isNum(z.nb) && z.nb > 0 && isNum(z.pec); }
+function caGlobal(z){ return globalOk(z) ? z.nb * z.pec * moisGlobal(z) / 12 : 0; }
+/* Rentrée N apprentissage : inscrits nominatifs + places restantes de la prévision globale */
+function placesRestantes(z){ return Math.max(0, (isNum(z.nb) ? z.nb : 0) - z.apprentis.length); }
+function caRentreeMixte(z){
+  if (!z.apprentis.length) return {t: caGlobal(z), manq: 0};
+  const r = caListe(z.apprentis), reste = placesRestantes(z);
+  return {t: r.t + (reste > 0 && isNum(z.pec) ? reste * z.pec * moisGlobal(z) / 12 : 0), manq: r.manq, ins: r.t, reste};
+}
+function zoneVide(z, liste){ return z.mode === "liste" ? liste.length === 0 : !globalOk(z); }
+function effectifZone(z, liste){ return z.mode === "liste" ? liste.length : (isNum(z.nb) ? z.nb : 0); }
+
+function apprRow2(f, col, mots){
+  const c = calcAppr(f), k = coef(f), z1 = f.ap26, z2 = f.ap27;
+  const byEnd = {};
+  let shade = new Set(), txts = {}, cont = false;
+  const add = (m, t) => { txts[m] = txts[m] ? txts[m] + "<br>" + t : t; };
+  if (z1.mode === "liste") {
+    f.apprentis.forEach(p => { const mi = monthIdx(p.fin); if (mi !== null && mi >= 0 && mi < 12) (byEnd[mi] = byEnd[mi] || []).push(p); if (mi === 12) cont = true; });
+    const last = cont ? 11 : Math.max(-1, ...Object.keys(byEnd).map(Number));
+    const debs = f.apprentis.map(p => monthIdx(p.debut)).filter(x => x !== null);
+    const first = debs.length ? Math.max(0, Math.min(...debs)) : 0;
+    for (let m = first; m <= last; m++) shade.add(m);
+    Object.entries(byEnd).forEach(([m, ps]) => { const ds = [...new Set(ps.map(p => p.fin))].sort(); add(Number(m), ds.map(d => "■ " + court(d) + " (" + ps.filter(p => p.fin === d).length + ")").join("<br>")); });
+  } else if (globalOk(z1) || z1.debut || z1.fin) {
+    const d = monthIdx(z1.debut), e = monthIdx(z1.fin || `${YEAR}-12-31`);
+    const a = d === null ? 0 : Math.max(0, d), b = e === null ? 11 : Math.min(11, e);
+    for (let m = a; m <= b; m++) shade.add(m);
+    if (a <= 11 && isNum(z1.nb)) add(a, nb(z1.nb) + " appr.");
+    if (e !== null && e >= 0 && e < 12) add(e, "■ Fin " + court(z1.fin));
+    if (e === 12) cont = true;
+  }
+  if (cont && !txts[11]) add(11, `→ ${YEAR+1}`);
+  /* rentrée N */
+  const blue = new Set(); let lab = null;
+  if (z2.actif) {
+    if (z2.mode === "liste" && z2.apprentis.length) {
+      const debs = z2.apprentis.map(p => monthIdx(p.debut)).filter(x => x !== null && x < 12);
+      const a = debs.length ? Math.max(0, Math.min(...debs)) : 8;
+      for (let m = a; m <= 11; m++) blue.add(m); lab = [a, z2.apprentis.length + " appr."];
+    } else if (z2.mode === "global" && (globalOk(z2) || (f.mode !== "stagiaire" && z2.apprentis.length))) {
+      const d = monthIdx(z2.debut), e = monthIdx(z2.fin || `${YEAR}-12-31`);
+      const a = d === null ? 8 : Math.max(0, d), b = e === null ? 11 : Math.min(11, e);
+      for (let m = a; m <= b; m++) blue.add(m); lab = [a, nb(f.mode === "stagiaire" ? z2.nb : Math.max(isNum(z2.nb) ? z2.nb : 0, z2.apprentis.length)) + " stag."];
+    }
+  }
+  const ex = monthIdx(f.examDebut);
+  const cells = cellsFor(m => {
+    let cls = shade.has(m) ? col.cls : "", txt = txts[m] || "";
+    if (ex === m && !txt && f.examLabel) txt = esc(f.examLabel) + " " + court(f.examDebut);
+    if (blue.has(m)) { cls = "nw"; txt = lab && lab[0] === m ? lab[1] : (txt && shade.has(m) ? txt : ""); }
+    return {cls, txt};
+  });
+  let left, right;
+  const lblP = mots.prixCourt;
+  if (c.sansPec) {
+    left = `<div class="tiny num">aucun apprenti ni prévision saisis</div>`;
+    right = `<div class="tiny num">pas de CA généré</div>`;
+  } else {
+    const d1 = z1.mode === "liste" ? `${f.apprentis.length} ${mots.contrat}${f.apprentis.length>1?"s":""} · ${lblP} × mois/12` : (globalOk(z1) ? `${nb(z1.nb)} × ${nb(z1.pec)} € × ${moisGlobal(z1)}/12` : "promo en cours non renseignée");
+    const d2 = !z2.actif ? `pas de rentrée ${YEAR} prévue` : (z2.mode === "liste" ? `${z2.apprentis.length} ${mots.contrat}${z2.apprentis.length>1?"s":""} nommés` : (f.mode !== "stagiaire" && z2.apprentis.length) ? `${z2.apprentis.length} inscrit${z2.apprentis.length>1?"s":""}${placesRestantes(z2) ? " + " + placesRestantes(z2) + " place(s) prévue(s)" : ""}` : (globalOk(z2) ? `${nb(z2.nb)} × ${nb(z2.pec)} € × ${moisGlobal(z2)}/12` : "rentrée à compléter"));
+    left = `<div class="big num" style="color:${col.c}">${eur(c.cur*k)}</div><div class="tiny num">${d1}</div>${absNote(f)}` + (c.manquants ? `<div class="warn tiny num">${c.manquants} ${lblP} manquant(s)</div>` : "");
+    right = `<div class="big num">${eur(c.tot*k)}</div><div class="tiny num" style="color:var(--new)">${z2.actif ? `dont rentrée ${YEAR} ` + eur(c.prev*k) + " (" + d2 + ")" : d2}</div>`;
+  }
+  const n1 = effectifZone(z1, f.apprentis);
+  const sub = [esc(f.code), n1 ? `${n1} ${mots.personne}${n1>1?"s":""}` : ""].filter(Boolean).join(" · ");
+  return `<tr><td><div class="fname">${esc(f.nom)}</div><div class="fsub">${sub}</div><div class="fsub">${esc(classTxt(f))}</div></td><td class="money">${left}</td>${cells}<td class="money">${right}</td></tr>`;
+}
+
+/* Tableau des personnes (promo en cours ou rentrée) */
+function peopleTable2(list, base, i, kind, zone, lblContrat, lblPrix){
+  const rowsH = list.map((ap,j) => { const q=`${base}.apprentis.${j}`; const id=q.replace(/\./g,"-"); return `<tr>
+    <td><input type="text" aria-label="Nom" id="f-${id}-nom" data-path="${q}.nom" data-type="text" value="${esc(ap.nom)}"></td>
+    <td><input type="text" aria-label="${lblContrat}" id="f-${id}-contrat" data-path="${q}.contrat" data-type="text" value="${esc(ap.contrat)}"></td>
+    <td><input type="date" aria-label="Début" id="f-${id}-debut" data-path="${q}.debut" data-type="date" value="${esc(ap.debut)}"></td>
+    <td><input type="date" aria-label="Fin" id="f-${id}-fin" data-path="${q}.fin" data-type="date" value="${esc(ap.fin)}"></td>
+    <td><input type="text" inputmode="decimal" aria-label="${lblPrix}" id="f-${id}-pec" data-path="${q}.pec" data-type="number" data-optional="1" value="${isNum(ap.pec)?esc(String(ap.pec).replace(".",",")):""}"></td>
+    <td class="num" id="f-${id}-mois">${moisEn2027(ap.debut, ap.fin)}</td>
+    <td><button type="button" class="btn danger small" data-act="del-person" data-kind="${kind}" data-zone="${zone}" data-i="${i}" data-j="${j}">Retirer</button></td></tr>`; }).join("");
+  return `<div class="scroll"><table class="ap"><thead><tr><th style="width:26%">Nom Prénom</th><th style="width:16%">${lblContrat}</th><th style="width:15%">Début</th><th style="width:15%">Fin</th><th style="width:13%">${lblPrix} €/an</th><th style="width:7%">Mois ${YEAR}</th><th></th></tr></thead><tbody>
+    ${rowsH || `<tr><td colspan="7" class="tiny">Personne n'est inscrit pour l'instant.</td></tr>`}
+    </tbody></table></div>
+    <div class="row-actions"><button type="button" class="btn small" data-act="add-person" data-kind="${kind}" data-zone="${zone}" data-i="${i}">+ Inscrire ${kind==="p"?"un apprenti":"un stagiaire"}</button></div>`;
+}
+function zoneApprResultat(o, quoi){
+  const z = quoi === "cours" ? o.ap26 : o.ap27, liste = quoi === "cours" ? o.apprentis : o.ap27.apprentis;
+  const k = coefMinore(o);
+  if (quoi !== "cours" && !z.actif) return `<span class="tiny">Cochez « Rentrée ${YEAR} prévue » pour l'ajouter à la time line et au prévisionnel.</span>`;
+  if (z.mode === "liste") {
+    if (!liste.length) return `<span class="warn">Inscrivez les apprentis un par un, ou passez en « Prévision globale ».</span>`;
+    const r = caListe(liste);
+    return `<b>${liste.length} inscrit${liste.length>1?"s":""}</b> · CA ${YEAR} = somme des (PEC × mois en ${YEAR} / 12) = <b>${eur(r.t)}</b> brut · <b>${eur(r.t*k)}</b> avec ${nb(o.absent)} % d'absentéisme${r.manq ? ` <span class="warn">· ${r.manq} PEC manquante(s)</span>` : ""}`;
+  }
+  if (quoi !== "cours" && o.mode !== "stagiaire" && z.apprentis.length) {
+    const r = caRentreeMixte(z), m = moisGlobal(z);
+    return `<b>${z.apprentis.length} inscrit${z.apprentis.length>1?"s":""}</b> : ${eur(r.ins)}${r.reste > 0 ? ` + <b>${r.reste} place${r.reste>1?"s":""} restante${r.reste>1?"s":""}</b> : ${r.reste} × ${isNum(z.pec)?eur(z.pec):"PEC ?"} × ${m}/12` : ""} · CA ${YEAR} = <b>${eur(r.t)}</b> brut · <b>${eur(r.t*k)}</b> avec ${nb(o.absent)} % d'absentéisme${r.manq ? ` <span class="warn">· ${r.manq} PEC manquante(s)</span>` : ""}`;
+  }
+  if (!globalOk(z)) return `<span class="warn">Saisissez le nombre d'apprentis et la PEC annuelle.</span>`;
+  const m = moisGlobal(z), ca = caGlobal(z);
+  return `<b>${nb(z.nb)} apprentis</b> · ${m} mois en ${YEAR} · CA ${YEAR} = ${nb(z.nb)} × ${eur(z.pec)} × ${m}/12 = <b>${eur(ca)}</b> brut · <b>${eur(ca*k)}</b> avec ${nb(o.absent)} % d'absentéisme`;
+}
+function zoneAppr(o, p, cat, i, kind, quoi){
+  const enCours = quoi === "cours";
+  const z = enCours ? o.ap26 : o.ap27;
+  const base = enCours ? p + ".ap26" : p + ".ap27";
+  const lblContrat = kind === "p" ? "N° de contrat" : "N° de convention", lblPrix = kind === "p" ? "PEC" : "Prix";
+  const actif = enCours || z.actif;
+  const sansListe = !enCours && kind === "p";
+  const corps = z.mode === "liste" && !sansListe
+    ? peopleTable2(enCours ? o.apprentis : z.apprentis, enCours ? p : base, i, kind, enCours ? "26" : "27", lblContrat, lblPrix)
+    : `<div class="fields">
+        ${fld("Date de début", base+".debut", z.debut, {type:"date"})}
+        ${fld("Date de fin", base+".fin", z.fin, {type:"date", hint: enCours ? "" : `vide = jusqu'en décembre ${YEAR}`})}
+        ${fld("Nombre d'apprentis (global)", base+".nb", z.nb, {type:"number", optional:true, placeholder:"—"})}
+        ${fld(lblPrix + " annuelle par apprenti (€)", base+".pec", z.pec, {type:"number", optional:true, placeholder:"—"})}
+      </div>${sansListe ? `<h4 class="sec-n" style="margin:14px 0 4px;font-weight:700">Apprentis inscrits pour la rentrée ${YEAR}</h4><p class="sec-n" style="margin:0 0 6px">Chaque inscrit remplace une place de la prévision globale (CA = inscrits + places restantes).</p>${peopleTable2(z.apprentis, base, i, kind, "27", lblContrat, lblPrix)}` : ""}`;
+  return `<div class="zone ${enCours?"zc":"zr"} ${actif?"":"off"}">
+    <div class="fields">
+      ${enCours ? "" : `<div class="chks">${fld(`Rentrée ${YEAR} prévue`, base+".actif", z.actif, {type:"checkbox"})}</div>`}
+      ${sansListe ? "" : fld("Mode de saisie", base+".mode", z.mode, {type:"select", rerender:true, wide2:true, options:[["liste","Liste nominative (inscription individuelle)"],["global","Prévision globale (nombre d'apprentis)"]]})}${sansListe ? `<p class="sec-n" style="grid-column:1/-1;margin:0">Prévision globale : nombre d'apprentis × PEC annuelle, sur les mois de ${YEAR}.</p>` : ""}
+    </div>
+    ${corps}
+    <div class="zres" id="za-${quoi}-res">${zoneApprResultat(o, quoi)}</div></div>`;
+}
+
+/* Fonds privés individuels : saisie nominative */
+function tableFPI(o, p, i, zone){
+  const liste = zone === "27" ? o.stagiaires27 : o.stagiaires, cle = zone === "27" ? "stagiaires27" : "stagiaires";
+  const rowsH = liste.map((x,j) => { const q = `${p}.${cle}.${j}`, id = q.replace(/\./g,"-"), r = caStagFPI(x);
+    const optsF = [["","—"], ...FINANCEMENTS.map(v => [v,v])]; if (x.financement && !FINANCEMENTS.includes(x.financement)) optsF.push([x.financement, x.financement]);
+    return `<tr>
+    <td><input type="text" aria-label="Nom Prénom" id="f-${id}-nom" data-path="${q}.nom" data-type="text" value="${esc(x.nom)}"></td>
+    <td><select aria-label="Type de financement" id="f-${id}-financement" data-path="${q}.financement" data-type="selectq">${optsF.map(([v,t]) => `<option value="${esc(v)}" ${v===x.financement?"selected":""}>${esc(t)}</option>`).join("")}</select></td>
+    <td><input type="text" aria-label="N° de dossier" id="f-${id}-dossier" data-path="${q}.dossier" data-type="text" value="${esc(x.dossier)}"></td>
+    <td><input type="date" aria-label="Début" id="f-${id}-debut" data-path="${q}.debut" data-type="date" value="${esc(x.debut)}"></td>
+    <td><input type="date" aria-label="Fin" id="f-${id}-fin" data-path="${q}.fin" data-type="date" value="${esc(x.fin)}"><div class="msg" id="f-${id}-fin-msg"></div></td>
+    <td><input type="text" inputmode="decimal" aria-label="Montant" id="f-${id}-montant" data-path="${q}.montant" data-type="number" data-optional="1" value="${isNum(x.montant)?esc(String(x.montant).replace(".",",")):""}"></td>
+    <td class="num" id="f-${id}-mois">${r.mc ? r.mc.an + "/" + r.mc.total : "—"}</td>
+    <td class="num" id="f-${id}-ca">${r.ok ? eur(r.ca) : "—"}</td>
+    <td><button type="button" class="btn danger small" data-act="del-stag-i" data-zone="${zone}" data-i="${i}" data-j="${j}">Retirer</button></td></tr>`; }).join("");
+  return `<div class="scroll"><table class="ap"><thead><tr><th style="width:17%">Nom Prénom</th><th style="width:17%">Type de financement</th><th style="width:11%">N° dossier</th><th style="width:12%">Début</th><th style="width:12%">Fin</th><th style="width:10%">Montant €</th><th style="width:6%">Mois ${YEAR}</th><th style="width:9%">CA ${YEAR}</th><th></th></tr></thead><tbody>
+    ${rowsH || `<tr><td colspan="9" class="tiny">Personne n'est inscrit pour l'instant.</td></tr>`}
+    </tbody></table></div>
+    <div class="row-actions"><button type="button" class="btn small" data-act="add-stag-i" data-zone="${zone}" data-i="${i}">+ Inscrire un stagiaire</button></div>`;
+}
+function resultatFPI(o, zone){
+  const liste = zone === "27" ? o.stagiaires27 : o.stagiaires, k = coefMinore(o);
+  if (!liste.length) return `<span class="tiny">Aucun stagiaire inscrit.</span>`;
+  let t = 0, manq = 0; liste.forEach(x => { const r = caStagFPI(x); if (r.ok) t += r.ca; else manq++; });
+  return `<b>${liste.length} inscrit${liste.length>1?"s":""}</b> · CA ${YEAR} = somme des (montant × mois comptés en ${YEAR} / durée) = <b>${eur(t)}</b> brut${k < 1 ? ` · <b>${eur(t*k)}</b> avec ${nb(o.absent)} % d'absentéisme` : ""}${manq ? ` <span class="warn">· ${manq} ligne(s) sans montant ou sans dates</span>` : ""}`;
+}
+function ficheFPI(o, p, i){
+  const ident = [fld("Nom de la formation", p+".nom", o.nom), fld("Lieu / session", p+".lieu", o.lieu),
+    fld("Financeur (classement)", p+".financeur", o.financeur, {type:"select", blank:true, options:opts(LISTES.financeur)}),
+    fld("Niveau", p+".niveau", o.niveau, {type:"select", blank:true, options:opts(LISTES.niveau)}),
+    fld("Domaine d'activité", p+".domaine", o.domaine, {type:"select", blank:true, options:opts(LISTES.domaine)}),
+    fld("Absentéisme prévu (%)", p+".absent", o.absent, {type:"number", hint:"0 = aucun abattement"})].join("");
+  return `
+      <nav class="ed-nav" aria-label="Parties">${["Identification","Stagiaires en cours",`Rentrée ${YEAR}`,"Observations"].map((t,n)=>`<a href="#s${n}">${t}</a>`).join("")}</nav>
+      <div id="s0">${sec("Identification et classement", `<div class="fields">${ident}</div>`)}</div>
+      <div id="s1">${sec("Stagiaires en cours", `<div class="zone zc">${tableFPI(o, p, i, "26")}<div class="zres" id="zi-26-res">${resultatFPI(o, "26")}</div></div>`, `Inscription individuelle : nom, type de financement, dates et montant de la formation de chaque stagiaire. Seuls les mois de ${YEAR} comptent dans le CA ${YEAR} (un mois compte s'il a au moins 15 jours).`)}</div>
+      <div id="s2">${sec(`Rentrée ${YEAR}`, `<div class="zone zr">${tableFPI(o, p, i, "27")}<div class="zres" id="zi-27-res">${resultatFPI(o, "27")}</div></div>`, `Stagiaires inscrits pour la rentrée ${YEAR} : le prévisionnel ${YEAR} se recalcule automatiquement.`)}</div>
+      <div id="s3">${sec("Observations", `<div class="fields">${fld("Observations", p+".observations", o.observations, {type:"textarea", wide:true, rows:3})}</div>`)}</div>`;
+}
+
+/* Visuel commun : toute formation hors zones (matrice, heures BDC, prorata) s'affiche en « Session en cours » / « Rentrée N » */
+function unifie(o, cat){ return cat !== "fpi" && !parZones(o, cat) && o.methode !== "dates"; }
+function perChamps(o, p, key, bdc){
+  const q = `${p}.${key}`, per = o[key], ca = bdc ? caHeures(per) : caCalcule(per), k = coefMinore(o);
+  const extra = bdc ? "" : `${fld("Forfait (€)", q+".forfait", per.forfait, {type:"number", optional:true, placeholder:"—"})}
+      ${fld("CA saisi (€) — remplace le calcul", q+".caSaisi", per.caSaisi, {type:"number", optional:true, placeholder:"vide = calcul", hint:`Calcul : ${eur(caCalcule(per))} · retenu : ${eur(caPeriode(per))}`})}`;
+  return `<div class="per ${key}" style="margin-top:10px"><div class="per-t">${key === "p1" ? `Janvier – août ${YEAR}` : `Septembre – décembre ${YEAR}`} · ${bdc ? "heures du bon de commande" : "matrice"}</div><div class="fields">
+      ${fld("Stagiaires", q+".eff", per.eff, {type:"number", optional:true, placeholder:"—"})}
+      ${fld("Heures centre", q+".heures", per.heures, {type:"number", optional:true, placeholder:"—"})}
+      ${fld(bdc ? "Prix du marché (€/h)" : "Tarif heure stagiaire (€)", q+".tarif", per.tarif, {type:"number", optional:true, placeholder:"—", hint:`CA : ${eur(ca)} · avec absentéisme : ${eur(ca*k)}`})}
+      ${extra}</div></div>`;
+}
+function zoneUniResultat(o, cat, quoi){
+  const c = calcBrut(o, cat), k = coefMinore(o), v = quoi === "cours" ? c.cur : c.prev;
+  if (estNeutre(o, cat)) return `<span class="tiny">Ligne neutre : hors totaux.</span>`;
+  if (sansInfo(o, cat)) return (o.methode === "matrice" || o.methode === "bdc") && (periodeActive(o.p1, o) || periodeActive(o.p2, o))
+    ? `<span class="warn">Valeurs reprises de la matrice, non comptées pour l'instant.</span> <button type="button" class="btn small primary" data-act="compter-periodes">Compter ces valeurs dans le CA</button> <span class="tiny">(ou modifiez une valeur)</span>`
+    : `<span class="warn">Aucune information saisie : pas de CA généré.</span>`;
+  if (cat === "fp" && o.methode === "auto" && o.mode === "stagiaire") return "";
+  if (quoi !== "cours" && o.methode === "auto" && !o.relance) return `<span class="tiny">Cochez « Redémarre en ${YEAR} » pour ajouter le prévisionnel.</span>`;
+  return `CA ${YEAR} ${quoi === "cours" ? "existant" : "prévisionnel"} = <b>${eur(v)}</b> brut · <b>${eur(v*k)}</b> avec ${nb(o.absent)} % d'absentéisme`;
+}
+function zoneUni(o, p, cat, quoi){
+  const enCours = quoi === "cours", m = o.methode, appr = cat === "apprentissage";
+  let champs = "", extra = "";
+  if (enCours) {
+    champs += fld(appr ? "Début de session" : "Date de début", p+".debut", o.debut, {type:"date"}) + fld(appr ? "Fin de session" : "Date de fin", p+".fin", o.fin, {type:"date"});
+    if (!appr) {
+      const opt = {type:"number", optional:true, placeholder:"—", idSuffix:"id"}, mb = montantBDC(o);
+      champs += fld("Nombre de parcours", p+".bdcStag", o.bdcStag, opt) + fld("Nombre d'heures centre", p+".bdcHeures", o.bdcHeures, opt)
+        + fld("Nombre d'heures entreprise", p+".hEnt", o.hEnt, opt) + fld("Prix unitaire du marché (€/h)", p+".bdcPrix", o.bdcPrix, opt)
+        + (mb !== null ? `<div class="f"><label>Montant TTC (calculé)</label><div class="dur-v" id="bdc-montant">${eur(mb)}</div><div class="hint">parcours × heures centre × prix unitaire</div></div>`
+                       : fld("Montant TTC (€)", p+".montant", o.montant, {type:"number", hint:"Saisi à la main : complétez parcours, heures centre et prix pour le calcul automatique"}));
+    }
+    if (m === "auto" && !appr) champs += fld(`Mois comptés en ${YEAR}`, p+".mois2027", o.mois2027, {type:"number", hint:`D'après les dates : ${moisEn2027(o.debut, o.fin)} mois`}) + fld("Durée de la formation (mois)", p+".duree", o.duree, {type:"number"});
+    if (m === "matrice" || m === "bdc") extra = perChamps(o, p, "p1", m === "bdc");
+  } else {
+    if (m === "auto" && !appr) {
+      champs += `<div class="chks" style="grid-column:1/-1">${fld(`Redémarre en ${YEAR} (prévisionnel)`, p+".relance", o.relance, {type:"checkbox"})}</div>`
+        + fld("Date de redémarrage", p+".dateRelance", o.dateRelance, {type:"date", hint:`${moisRestants(o.dateRelance)} mois comptés jusqu'à décembre`});
+    }
+    if (m === "bdc") champs += fld("Date de redémarrage", p+".dateRelance", o.dateRelance, {type:"date", hint:"Début de la période bleue sur la time line"});
+    if (m === "matrice" || m === "bdc") extra = perChamps(o, p, "p2", m === "bdc");
+  }
+  return `<div class="zone ${enCours?"zc":"zr"}">${champs ? `<div class="fields">${champs}</div>` : ""}${extra}
+    <div class="zres" id="zu-${quoi}-res">${zoneUniResultat(o, cat, quoi)}</div></div>`;
+}
+
+/* Sections */
+function sec(titre, contenu, note){ return `<section class="sec"><h3>${titre}</h3>${note?`<p class="sec-n">${note}</p>`:""}${contenu}</section>`; }
+function secIdentite(o, p, cat){
+  const f = [];
+  f.push(fld("Nom de la formation", p+".nom", o.nom));
+  if (cat === "apprentissage") f.push(fld("Code / promo", p+".code", o.code));
+  else { f.push(fld("Lieu / session", p+".lieu", o.lieu)); f.push(fld(cat==="fp"?"N° de convention / devis":"N° de bon de commande", p+".bdc", o.bdc)); }
+  f.push(fld("Financeur", p+".financeur", o.financeur, {type:"select", blank:true, options:opts(LISTES.financeur)}));
+  f.push(fld("Marché GIP", p+".marcheGip", o.marcheGip, {type:"select", blank:true, options:opts(LISTES.marcheGip)}));
+  f.push(fld("Niveau", p+".niveau", o.niveau, {type:"select", blank:true, options:opts(LISTES.niveau)}));
+  f.push(fld("Domaine d'activité", p+".domaine", o.domaine, {type:"select", blank:true, options:opts(LISTES.domaine)}));
+  f.push(fld("Intégration", p+".integration", o.integration, {type:"select", blank:true, options:opts(LISTES.integration)}));
+  return `<div class="fields">${f.join("")}</div>${cat === "apprentissage" || o.methode === "dates" || unifie(o, cat) ? "" : blocBDC(o, p)}`;
+}
+/* Éléments du bon de commande : montant TTC = parcours × heures centre × prix unitaire */
+function bdcComplet(o){ return isNum(o.bdcStag) && isNum(o.bdcHeures) && isNum(o.bdcPrix); }
+function montantBDC(o){ return bdcComplet(o) ? Math.round(o.bdcStag * o.bdcHeures * o.bdcPrix * 100) / 100 : null; }
+function majMontant(o){ const m = montantBDC(o); if (m !== null) o.montant = m; }
+function blocBDC(o, p){
+  const opt = {type:"number", optional:true, placeholder:"—", idSuffix:"id"};
+  const m = montantBDC(o);
+  const montant = m !== null
+    ? `<div class="f"><label>Montant TTC (calculé)</label><div class="dur-v" id="bdc-montant">${eur(m)}</div><div class="hint">parcours × heures centre × prix unitaire</div></div>`
+    : fld("Montant TTC (€)", p+".montant", o.montant, {type:"number", hint:"Saisi à la main : complétez parcours, heures centre et prix pour le calcul automatique"});
+  return `<div class="per bdcid"><div class="per-t">Bon de commande</div><div class="fields">
+    ${fld("Nombre de parcours", p+".bdcStag", o.bdcStag, opt)}
+    ${fld("Nombre d'heures centre", p+".bdcHeures", o.bdcHeures, opt)}
+    ${fld("Nombre d'heures entreprise", p+".hEnt", o.hEnt, opt)}
+    ${fld("Prix unitaire du marché (€/h)", p+".bdcPrix", o.bdcPrix, opt)}
+    ${montant}
+  </div></div>`;
+}
+/* Même donnée affichée à deux endroits : on recopie la valeur dans l'autre champ */
+function syncChamps(el, v){
+  document.querySelectorAll(`#view-edit [data-path="${el.dataset.path}"]`).forEach(x => {
+    if (x === el || x.type === "checkbox") return;
+    x.value = isNum(v) ? String(v).replace(".", ",") : (v === null || v === undefined ? "" : String(v));
+    x.setAttribute("aria-invalid", "false");
+  });
+}
+function secDates(o, p, cat){
+  const f = [];
+  const appr = cat === "apprentissage" || (cat === "fp" && o.mode === "stagiaire" && o.methode === "auto");
+  const dts = o.methode === "dates" || parZones(o, cat) || unifie(o, cat);
+  if (!dts) f.push(fld(appr ? "Début de session (si personne n'est nommé)" : "Date de début", p+".debut", o.debut, {type:"date"}));
+  if (!dts) f.push(fld(appr ? "Fin de session (si personne n'est nommé)" : "Date de fin", p+".fin", o.fin, {type:"date"}));
+  f.push(fld("Épreuves / jury : libellé", p+".examLabel", o.examLabel));
+  f.push(fld("Épreuves : début", p+".examDebut", o.examDebut, {type:"date"}));
+  f.push(fld("Épreuves : fin", p+".examFin", o.examFin, {type:"date"}));
+  if (cat !== "apprentissage") f.push(fld("Bilan / espace de dialogue", p+".bilan", o.bilan, {type:"date"}));
+  if (cat !== "apprentissage" && o.methode !== "matrice" && !dts) f.push(fld("Date de redémarrage", p+".dateRelance", o.dateRelance, {type:"date", hint: o.methode === "bdc" ? "Début de la période bleue sur la time line" : `${moisRestants(o.dateRelance)} mois comptés jusqu'à décembre`}));
+  const chk = [fld("Dates à préciser", p+".datesAPreciser", o.datesAPreciser, {type:"checkbox"})];
+  if (cat !== "apprentissage" && !parZones(o, cat)) chk.push(fld("Ligne neutre (hors totaux)", p+".neutre", o.neutre, {type:"checkbox"}));
+  return `<div class="fields">${f.join("")}</div><div class="chks">${chk.join("")}</div>`;
+}
+function periodBlocs(o, p, bdc){
+  const k = coefMinore(o);
+  const bloc = (key, titre) => {
+    const q = `${p}.${key}`, per = o[key], ca = bdc ? caHeures(per) : caCalcule(per);
+    const extra = bdc ? "" : `${fld("Forfait (€)", q+".forfait", per.forfait, {type:"number", optional:true, placeholder:"—"})}
+      ${fld("CA saisi (€) — remplace le calcul", q+".caSaisi", per.caSaisi, {type:"number", optional:true, placeholder:"vide = calcul", hint:`Calcul : ${eur(caCalcule(per))} · retenu : ${eur(caPeriode(per))}`})}`;
+    return `<div class="per ${key}"><div class="per-t">${titre}</div><div class="fields">
+      ${fld("Stagiaires", q+".eff", per.eff, {type:"number", optional:true, placeholder:"—"})}
+      ${fld("Heures centre", q+".heures", per.heures, {type:"number", optional:true, placeholder:"—"})}
+      ${fld(bdc ? "Prix du marché (€/h)" : "Tarif heure stagiaire (€)", q+".tarif", per.tarif, {type:"number", optional:true, placeholder:"—", hint:`CA : ${eur(ca)} · avec absentéisme : ${eur(ca*k)}`})}
+      ${extra}</div></div>`;
+  };
+  return `<div class="pers">${bloc("p1",`Janvier – août ${YEAR} · existant`)}${bloc("p2",`Septembre – décembre ${YEAR} · prévisionnel`)}</div>`;
+}
+function secCalcul(o, p, cat){
+  const labelsAuto = {actions:"Prorata du bon de commande (mois)", apprentissage:"Par apprenti (PEC × mois / 12)", fp:"Selon le mode (montant global ou par stagiaire)"};
+  const optBdc = cat === "apprentissage" ? [] : [["dates",`Automatique : dates et bon de commande (prorata des mois ${YEAR})`], ["bdc","Bon de commande : stagiaires × heures centre × prix du marché"]];
+  const c = calcBrut(o, cat), k = coefMinore(o);
+  const avis = sansInfo(o, cat) ? `<div class="errbox" id="avis-vide" style="margin:6px 0 10px">Aucune information du bon de commande n'est saisie (nombre de parcours, heures centre, prix unitaire) : aucun chiffre d'affaires n'est généré pour cette formation${(o.methode==="matrice"||o.methode==="bdc") && (periodeActive(o.p1, o)||periodeActive(o.p2, o)) ? ". Les valeurs ci-dessous ne sont pas comptées" : ""}. ${o.methode === "dates" || unifie(o, cat) ? `Complétez la zone « Session en cours » ou « Rentrée ${YEAR} ».` : "Complétez l'encadré « Bon de commande » dans « Identification et classement »."}</div>` : `<div id="avis-vide"></div>`;
+  let h = avis + `<div class="fields">
+    ${fld("Méthode de calcul du CA", p+".methode", o.methode, {type:"select", rerender:true, wide2:true, options:[...optBdc, ["auto", labelsAuto[cat]], ["matrice","Matrice : forfait ou effectif × heures × tarif, par période"]]})}
+    ${fld("Absentéisme prévu (%)", p+".absent", o.absent, {type:"number", hint:`CA fin ${YEAR} avec absentéisme : ${eur(c.tot*k)} (brut ${eur(c.tot)})`})}
+    ${cat === "fp" && o.methode === "auto" ? fld("Mode (hors matrice)", p+".mode", o.mode, {type:"select", rerender:true, options:[["global","Montant global (comme une action)"],["stagiaire","Par stagiaire (comme l'apprentissage)"]]}) : ""}
+  </div>`;
+  if (unifie(o, cat) && o.methode !== "bdc") {
+    h += `<p class="sec-n">Le CA ${YEAR} se calcule à partir des deux zones « Session en cours » (janvier – août ou mois de ${YEAR} de la session) et « Rentrée ${YEAR} » (prévisionnel).</p>`;
+  } else if (o.methode === "dates") {
+    h += `<p class="sec-n">Le CA ${YEAR} se calcule tout seul à partir des deux zones « Session en cours » et « Rentrée ${YEAR} » : montant × mois de ${YEAR} / mois de formation.</p>`;
+  } else if (o.methode === "bdc") {
+    const n = v => isNum(v) ? v : 0, theo = n(o.bdcStag) * n(o.bdcHeures) * n(o.bdcPrix);
+    h += (unifie(o, cat) ? "" : periodBlocs(o, p, true)) + `<div class="per ref"><div class="per-t">Référence du bon de commande</div><div class="fields">
+      ${fld("Stagiaires (parcours)", p+".bdcStag", o.bdcStag, {type:"number", optional:true, placeholder:"—"})}
+      ${fld("Prix unitaire du marché (€/h)", p+".bdcPrix", o.bdcPrix, {type:"number", optional:true, placeholder:"—", hint:`Contrôle : ${eur(theo)} ${o.montant && Math.abs(theo-o.montant)>0.5 ? "≠ montant BDC "+eur(o.montant) : (o.montant ? "= montant BDC" : "")}`})}
+      <div class="f"><label>&nbsp;</label><button type="button" class="btn small" data-act="copy-bdc" data-path="${p}">Reprendre stagiaires et prix dans les 2 périodes</button></div>
+      </div><div class="hint">Les heures centre du parcours se règlent dans la partie « Durées ».</div></div>`;
+  } else if (o.methode === "matrice") {
+    h += periodBlocs(o, p, false);
+  } else if (cat === "actions" || (cat === "fp" && o.mode !== "stagiaire")) {
+    h += `<div class="fields">
+      ${fld(`Mois comptés en ${YEAR}`, p+".mois2027", o.mois2027, {type:"number", hint:`D'après les dates : ${moisEn2027(o.debut, o.fin)} mois`})}
+      ${fld("Durée de la formation (mois)", p+".duree", o.duree, {type:"number"})}
+      ${fld(`Redémarre en ${YEAR} (prévisionnel)`, p+".relance", o.relance, {type:"checkbox"})}</div>`;
+  } else {
+    h += `<p class="sec-n">Le CA ${YEAR} se calcule tout seul à partir des zones « Promotion en cours » et « Rentrée ${YEAR} » : PEC × mois en ${YEAR} / 12, par apprenti inscrit ou pour le nombre d'apprentis prévu.</p>`;
+  }
+  return h;
+}
+function peopleTable(f, p, i, kind, lblContrat, lblPrix, showPrix){
+  const rowsH = f.apprentis.map((ap,j) => { const q=`${p}.apprentis.${j}`; const id=q.replace(/\./g,"-"); return `<tr>
+    <td><input type="text" aria-label="Nom" id="f-${id}-nom" data-path="${q}.nom" data-type="text" value="${esc(ap.nom)}"></td>
+    <td><input type="text" aria-label="${lblContrat}" id="f-${id}-contrat" data-path="${q}.contrat" data-type="text" value="${esc(ap.contrat)}"></td>
+    <td><input type="date" aria-label="Début" id="f-${id}-debut" data-path="${q}.debut" data-type="date" value="${esc(ap.debut)}"></td>
+    <td><input type="date" aria-label="Fin" id="f-${id}-fin" data-path="${q}.fin" data-type="date" value="${esc(ap.fin)}"></td>
+    ${showPrix?`<td><input type="text" inputmode="decimal" aria-label="${lblPrix}" id="f-${id}-pec" data-path="${q}.pec" data-type="number" data-optional="1" value="${isNum(ap.pec)?esc(String(ap.pec).replace(".",",")):""}"></td>
+    <td class="num" id="f-${id}-mois">${moisEn2027(ap.debut, ap.fin)}</td>`:""}
+    <td><button type="button" class="btn danger small" data-act="del-person" data-kind="${kind}" data-i="${i}" data-j="${j}">Retirer</button></td></tr>`; }).join("");
+  const cols = showPrix ? 7 : 5;
+  return `<div class="scroll"><table class="ap"><thead><tr><th style="width:26%">Nom Prénom</th><th style="width:16%">${lblContrat}</th><th style="width:15%">Début</th><th style="width:15%">Fin</th>${showPrix?`<th style="width:13%">${lblPrix} €/an</th><th style="width:7%">Mois ${YEAR}</th>`:""}<th></th></tr></thead><tbody>
+    ${rowsH || `<tr><td colspan="${cols}" class="tiny">Personne n'est nommé pour l'instant.</td></tr>`}
+    </tbody></table></div>
+    <div class="row-actions"><button type="button" class="btn small" data-act="add-person" data-kind="${kind}" data-i="${i}">+ Ajouter ${kind==="p"?"un apprenti":"un stagiaire"}</button></div>`;
+}
+
+function ficheUni(o, p, cat, kind, personnes){
+  const parts = [["Identification", sec("Identification et classement", secIdentite(o, p, cat))],
+    ["Session en cours", sec("Session en cours", zoneUni(o, p, cat, "cours"), `Dates réelles de la session (elle peut commencer en ${YEAR-1}) et éléments du bon de commande : seuls les mois de ${YEAR} comptent dans le CA ${YEAR}.`)],
+    [`Rentrée ${YEAR}`, sec(`Rentrée ${YEAR}`, zoneUni(o, p, cat, "rentree"), "Prévisionnel de la prochaine session, recalculé automatiquement.")],
+    ["Épreuves", sec("Épreuves et bilan", secDates(o, p, cat))]];
+  if (kind !== "p") parts.push(["Durées", sec("Durées : centre et entreprise", secDurees(o, p), `Heures du parcours (bon de commande) et répartition mois par mois en ${YEAR}, d'après le planning.`)]);
+  parts.push(["Calcul du CA", sec("Calcul du CA", secCalcul(o, p, cat))]);
+  if (personnes) parts.push(["Personnes", personnes]);
+  parts.push(["Observations", sec("Observations", `<div class="fields">${fld("Observations", p+".observations", o.observations, {type:"textarea", wide:true, rows:3})}</div>`)]);
+  return `
+      <nav class="ed-nav" aria-label="Parties">${parts.map(([t],n)=>`<a href="#s${n}">${t}</a>`).join("")}</nav>
+      ${parts.map(([,h],n)=>`<div id="s${n}">${h}</div>`).join("\n      ")}
+      `;
+}
+function renderEdit(){
+  const S = state.sites[site];
+  if (!S) { vueSansEtab("view-edit"); return; }
+  validerSel();
+  const actDel = {a:"del-action", p:"del-appr", f:"del-fp", i:"del-fpi"};
+  const item = (key, o, cat) => `<div class="ed-row ${key===sel?"on":""}"><button type="button" class="ed-item ${key===sel?"on":""}" data-sel="${key}" aria-current="${key===sel}">
+      <span class="ei-n" data-r="nom">${esc(o.nom)}</span><span class="ei-s" data-r="sub">${esc(sousTitre(o, cat))}</span><span class="ei-v" data-r="ca">${resumeCarte(o, cat)}</span></button>
+      <button type="button" class="ed-del" data-act="${actDel[key[0]]}" data-i="${key.slice(1)}" title="Supprimer « ${esc(o.nom)} »" aria-label="Supprimer ${esc(o.nom)}">Supprimer</button></div>`;
+  const groupe = (titre, cls, list, prefix, cat, addAct) => `<div class="ed-g ${cls}"><div class="ed-gh"><span>${titre}</span><button type="button" class="btn small" data-act="${addAct}" title="Ajouter">+ Ajouter</button></div>
+      ${list.map((o,i) => item(prefix+i, o, cat)).join("") || `<div class="tiny" style="padding:6px 10px">Aucune formation.</div>`}</div>`;
+  let side = `<div class="ed-tools">
+      <button type="button" class="btn save" data-act="save-view">Enregistrer et voir la time line</button>
+      <div class="ed-tools2"><button type="button" class="btn small" data-act="export">Enregistrer une copie</button><button type="button" class="btn small" data-act="import">Ouvrir une copie</button></div>
+    </div>`;
+  side += groupe("Actions","ga",S.actions,"a","actions","add-action")
+        + groupe("Apprentissage","gp",S.apprentissage,"p","apprentissage","add-appr")
+        + groupe("Fonds privés","gf",S.fondsPrives,"f","fp","add-fp")
+        + groupe("Fonds privés individuels","gi",S.fondsPrivesInd,"i","fpi","add-fpi")
+        + `<div class="ed-g"><button type="button" class="ed-item ${sel==="notes"?"on":""}" data-sel="notes"><span class="ei-n">Remarques « Hors ${YEAR} »</span><span class="ei-s">ruptures, fins en ${YEAR-1}…</span></button></div>
+        <div class="ed-reset"><button type="button" class="btn danger small" data-act="reset">Vider cet établissement</button></div>`;
+
+  const x = selObjet();
+  let main;
+  if (!x || x.key === "notes") {
+    main = `<div class="ed-head"><div><div class="eyebrow">${esc(nomEtab(site))}</div><h2>Remarques « Hors ${YEAR} »</h2></div></div>
+      ${sec("Remarques", `<div class="fields">${fld("Une remarque par ligne", "notesHors", S.notesHors, {type:"textarea", wide:true, rows:8})}</div>`, `Elles s'affichent dans « Qui finit quand », partie « Hors ${YEAR} ».`)}`;
+  } else {
+    const {o, cat, p, i, kind} = x;
+    const c = calcBrut(o, cat), k = coefMinore(o);
+    const delAct = kind === "a" ? "del-action" : kind === "p" ? "del-appr" : kind === "i" ? "del-fpi" : "del-fp";
+    const colVar = kind === "a" ? "--ses" : kind === "p" ? "--app" : kind === "i" ? "--fpi" : "--fp";
+    const personnes = kind === "p" ? sec(`Apprentis (${o.apprentis.length})`, peopleTable(o, p, i, "p", "N° de contrat", "PEC", o.methode !== "matrice"))
+      : kind === "f" ? sec(`Stagiaires (${o.apprentis.length})`, peopleTable(o, p, i, "f", "N° de convention", "Prix", o.methode === "auto" && o.mode === "stagiaire")) : "";
+    main = `<div class="ed-head" style="--c:var(${colVar})">
+        <div class="ed-ht"><div class="eyebrow" style="color:var(${colVar})">${CATS[kind].titre} · ${esc(nomEtab(site))}</div><h2 id="ed-nom">${esc(o.nom)}</h2><div class="tiny" id="ed-sub">${esc(sousTitre(o, cat))}${dureeTxt(o)?" · "+esc(dureeTxt(o)):""}</div></div>
+        <div class="ed-kpi"><div class="kpi s"><span>Début ${YEAR} avec absentéisme</span><b id="ed-deb">${estNeutre(o,cat)?"—":eur(c.cur*k)}</b><small id="ed-deb-brut">${estNeutre(o,cat)?"":"brut "+eur(c.cur)}</small></div>
+          <div class="kpi s"><span>Fin ${YEAR} avec absentéisme</span><b id="ed-fin">${estNeutre(o,cat)?"—":eur(c.prev*k)}</b><small id="ed-fin-brut">${estNeutre(o,cat)?"":"brut "+eur(c.prev)}</small></div>
+          <div class="kpi s tot"><span>Total ${YEAR} (début + fin)</span><b id="ed-ca">${estNeutre(o,cat)?"hors totaux":eur(c.tot*k)}</b><small id="ed-brut">${estNeutre(o,cat)?"":"brut "+eur(c.tot)}</small></div>
+          <div class="kpi-del"><button type="button" class="btn danger small" data-act="${delAct}" data-i="${i}">Supprimer cette formation</button></div></div>
+      </div>
+      <div class="preview"><div class="pv-t">Aperçu dans la time line · mis à jour pendant la saisie</div><div id="pv-${x.key}">${previewHTML(o, cat)}</div></div>
+      ${kind === "i" ? ficheFPI(o, p, i) : parZones(o, cat) ? `
+      <nav class="ed-nav" aria-label="Parties">${["Identification","Promotion en cours",`Rentrée ${YEAR}`,"Épreuves"].concat(kind==="p"?[]:["Durées"]).concat(["Calcul du CA","Observations"]).map((t,n)=>`<a href="#s${n}">${t}</a>`).join("")}</nav>
+      <div id="s0">${sec("Identification et classement", secIdentite(o, p, cat))}</div>
+      <div id="s1">${sec("Promotion en cours", zoneAppr(o, p, cat, i, kind, "cours"), `Apprentis déjà en formation (entrés en ${YEAR-1} ou avant) : inscrivez-les un par un, ou saisissez un nombre global. Seuls les mois de ${YEAR} comptent dans le CA ${YEAR}.`)}</div>
+      <div id="s2">${sec(`Rentrée ${YEAR}`, zoneAppr(o, p, cat, i, kind, "rentree"), `Nouvelle promotion : inscription individuelle ou prévision globale ; le prévisionnel ${YEAR} se recalcule automatiquement.`)}</div>
+      <div id="s3">${sec("Épreuves", secDates(o, p, cat))}</div>
+      ${kind==="p" ? "" : `<div id="s4">${sec("Durées : centre et entreprise", secDurees(o, p), `Répartition mois par mois des heures en ${YEAR}, d'après le planning.`)}</div>`}
+      <div id="s${kind==="p"?4:5}">${sec("Calcul du CA", secCalcul(o, p, cat))}</div>
+      <div id="s${kind==="p"?5:6}">${sec("Observations", `<div class="fields">${fld("Observations", p+".observations", o.observations, {type:"textarea", wide:true, rows:3})}</div>`)}</div>
+      ` : o.methode === "dates" ? `
+      <nav class="ed-nav" aria-label="Parties">${["Identification","Session en cours",`Rentrée ${YEAR}`,"Épreuves","Durées","Calcul du CA"].concat(kind!=="a"?["Personnes"]:[]).concat(["Observations"]).map((t,n)=>`<a href="#s${n}">${t}</a>`).join("")}</nav>
+      <div id="s0">${sec("Identification et classement", secIdentite(o, p, cat))}</div>
+      <div id="s1">${sec("Session en cours", zoneSession(o, p, cat, "cours"), `Dates réelles de la session (elle peut commencer en ${YEAR-1}) : seuls les mois de ${YEAR} apparaissent sur la time line et comptent dans le CA ${YEAR}.`)}</div>
+      <div id="s2">${sec(`Rentrée ${YEAR}`, zoneSession(o, p, cat, "rentree"), `Prochaine session : le prévisionnel ${YEAR} se recalcule automatiquement sur ses mois de ${YEAR}.`)}</div>
+      <div id="s3">${sec("Épreuves et bilan", secDates(o, p, cat))}</div>
+      <div id="s4">${sec("Durées : centre et entreprise", secDurees(o, p), `Répartition mois par mois des heures en ${YEAR}, d'après le planning.`)}</div>
+      <div id="s5">${sec("Calcul du CA", secCalcul(o, p, cat))}</div>
+      ${personnes ? `<div id="s6">${personnes}</div>` : ""}
+      <div id="s${kind!=="a"?7:6}">${sec("Observations", `<div class="fields">${fld("Observations", p+".observations", o.observations, {type:"textarea", wide:true, rows:3})}</div>`)}</div>
+      ` : unifie(o, cat) ? ficheUni(o, p, cat, kind, personnes) : `
+      <nav class="ed-nav" aria-label="Parties">${["Identification","Dates"].concat(kind==="p"?[]:["Durées"]).concat(["Calcul du CA"]).concat(kind!=="a"?["Personnes"]:[]).concat(["Observations"]).map((t,n)=>`<a href="#s${n}">${t}</a>`).join("")}</nav>
+      <div id="s0">${sec("Identification et classement", secIdentite(o, p, cat))}</div>
+      <div id="s1">${sec("Dates, épreuves et redémarrage", secDates(o, p, cat))}</div>
+      ${kind==="p" ? "" : `<div id="s2">${sec("Durées : centre et entreprise", secDurees(o, p), `Heures du parcours (bon de commande) et répartition mois par mois en ${YEAR}, d'après le planning.`)}</div>`}
+      <div id="s3">${sec("Calcul du CA", secCalcul(o, p, cat))}</div>
+      ${personnes ? `<div id="s4">${personnes}</div>` : ""}
+      <div id="s${kind!=="a"?5:4}">${sec("Observations", `<div class="fields">${fld("Observations", p+".observations", o.observations, {type:"textarea", wide:true, rows:3})}</div>`)}</div>
+      `}
+      <div class="ed-danger"><button type="button" class="btn danger small" data-act="${delAct}" data-i="${i}">Supprimer cette formation</button></div>`;
+  }
+  document.getElementById("view-edit").innerHTML = `<div class="ed"><aside class="ed-side">${side}</aside><div class="ed-main">${main}</div></div>`;
+}
+
+/* ============ Mise à jour d'une valeur ============ */
+function getRef(path){
+  const parts = path.split(".");
+  let o = state.sites[site];
+  for (let i=0;i<parts.length-1;i++){ o = o[/^\d+$/.test(parts[i]) ? Number(parts[i]) : parts[i]]; if (o===undefined||o===null) return null; }
+  return {obj:o, key:parts[parts.length-1]};
+}
+function showMsg(el, msg){
+  el.setAttribute("aria-invalid", msg ? "true" : "false");
+  const m = document.getElementById(el.id+"-msg");
+  if (m) m.textContent = msg || "";
+  if (!m && msg) el.title = msg; else if (!msg) el.removeAttribute("title");
+}
+/* Reconstruit la fiche après une validation sans perdre le champ où l'on vient de cliquer (ni ce qu'on y tape) */
+function rerenderGarderFocus(apres){
+  setTimeout(() => {
+    const a = document.activeElement, id = a && a.id;
+    let pos = null; try { pos = a.selectionStart; } catch(err) {}
+    const val = a && "value" in a ? a.value : null;
+    renderAll();
+    if (apres) apres();
+    if (id) { const f = document.getElementById(id); if (f) { if (val !== null && f.value !== val && f.dataset && f.dataset.type !== "select" && f.dataset.type !== "selectq") { f.value = val; f.dispatchEvent(new Event("input", {bubbles:true})); } f.focus(); try { if (pos !== null) f.setSelectionRange(pos, pos); } catch(err) {} } }
+  }, 0);
+}
+function marquerPeriodes(path){
+  if (!/\.p[12]\.(eff|heures|tarif|forfait|caSaisi)$/.test(path)) return;
+  const ref = getRef(path.replace(/\.p[12]\.[^.]+$/, ".x")); if (ref && ref.obj) ref.obj.saisiPeriodes = true;
+}
+function onChange(e){
+  const el = e.target;
+  if (!el.dataset || !el.dataset.path) return;
+  const ref = getRef(el.dataset.path);
+  if (!ref) return;
+  const t = el.dataset.type;
+  let v;
+  if (t==="bool") v = el.checked;
+  else if (t==="select" || t==="selectq") v = el.value;
+  else if (t==="number") {
+    if (el.value.trim()==="" && el.dataset.optional) v = null;
+    else {
+      v = parseNumber(el.value);
+      if (!isNum(v)) { showMsg(el, "Nombre attendu (ex. 99352 ou 99 352,50)"); return; }
+      if (v < 0) { showMsg(el, "Le nombre doit être positif"); return; }
+      if (ref.key === "absent" && v > 100) { showMsg(el, "Le taux doit être compris entre 0 et 100"); return; }
+    }
+  } else if (t==="date") {
+    v = el.value;
+    if (v && !parseDate(v)) { showMsg(el, "Date invalide"); return; }
+  } else v = el.value;
+  showMsg(el, "");
+  let ancien = ref.obj[ref.key];
+  if ("orig" in el.dataset) { try { ancien = JSON.parse(el.dataset.orig); } catch(err) {} delete el.dataset.orig; }
+  ref.obj[ref.key] = v;
+  marquerPeriodes(el.dataset.path);
+  majAlertesDates(ref.obj, el.dataset.path);
+  syncChamps(el, v);
+  if (ref.obj && ref.obj.methode === "dates" || (ref.obj && "actif" in ref.obj && el.dataset.path.includes(".r27."))) {
+    const x = selObjet();
+    if (x && x.o && x.o.methode === "dates") {
+      const r = x.o.r27;
+      const calcC = sessionEnCours(x.o).calc, calcR = montantSession(r.stag, r.heures, r.prix, r.montant).calc;
+      const affC = !!document.getElementById("z-cours-montant"), affR = !!document.getElementById("z-rentree-montant");
+      if (ref.key === "actif" && v === true && !r.fin && parseDate(r.debut)) { const mc = moisComptes(x.o.debut, x.o.fin); if (mc && mc.total) r.fin = finDeMois(r.debut, mc.total); }
+      if (ref.key === "actif" || calcC !== affC || calcR !== affR) { save(); rerenderGarderFocus(); return; }
+    }
+  }
+  if (["bdcStag","bdcHeures","bdcPrix"].includes(ref.key) && "montant" in ref.obj) {
+    const avant = document.getElementById("bdc-montant") !== null;
+    majMontant(ref.obj);
+    if (avant !== bdcComplet(ref.obj) && ref.key !== "bdcHeures") { save(); rerenderGarderFocus(); return; }
+  }
+  if ((ref.key === "debut" || ref.key === "fin") && Array.isArray(ref.obj.planC) && ancien !== v && !/apprentis/.test(el.dataset.path)) {
+    const rc = recaler(ref.obj, "planC"), re = recaler(ref.obj, "planE");
+    save(); const refObj = ref.obj, chemin = el.dataset.path; rerenderGarderFocus(() => majAlertesDates(refObj, chemin));
+    const parts = []; if (rc !== null) parts.push("centre " + nb(rc) + " h"); if (re !== null) parts.push("entreprise " + nb(re) + " h");
+    if (parts.length) toast(`Planning ${YEAR} recalé sur les nouvelles dates : ` + parts.join(" · "));
+    return;
+  }
+  if ((ref.key === "bdcHeures" || ref.key === "hEnt") && Array.isArray(ref.obj.planC) && ancien !== v) {
+    const arr = ref.key === "bdcHeures" ? "planC" : "planE";
+    const r = repartir(ref.obj, arr, ancien, v);
+    save();
+    rerenderGarderFocus();
+    if (r !== null) toast(`Répartition mois par mois mise à jour : ${arr === "planC" ? "centre" : "entreprise"} ${YEAR} = ${nb(r)} h`);
+    return;
+  }
+  save();
+  if (t==="select") { renderAll(); return; }
+  refreshDerived();
+}
+/* Arrondi à l'heure en conservant le total (méthode des plus grands restes) */
+function arrondirPlan(cible){
+  const visee = Math.round(cible.reduce((t,x) => t + (isNum(x) ? x : 0), 0));
+  const arr2 = cible.map(x => isNum(x) ? Math.floor(x) : null);
+  let reste = visee - arr2.reduce((t,x) => t + (isNum(x) ? x : 0), 0);
+  const ordre = cible.map((x,i) => ({i, f: isNum(x) ? x - Math.floor(x) : -1})).filter(o => o.f >= 0).sort((a,b) => b.f - a.f || a.i - b.i);
+  for (let n = 0; reste > 0 && ordre.length; n++, reste--) arr2[ordre[n % ordre.length].i] += 1;
+  return {arr: arr2.map(x => isNum(x) && x === 0 ? null : x), total: visee};
+}
+/* Mois actifs de la formation en N et part de N dans la durée totale */
+function fenetre2027(o){
+  const d = parseDate(o.debut), fn = parseDate(o.fin);
+  if (!d || !fn || o.datesAPreciser) return null;
+  const idx = x => x.y * 12 + x.m - 1;
+  const nbMois = idx(fn) - idx(d) + 1; if (nbMois <= 0) return null;
+  const m0 = Math.max(idx(d), YEAR*12) - YEAR*12, m1 = Math.min(idx(fn), YEAR*12 + 11) - YEAR*12;
+  if (m1 < m0) return {m0, m1, part: 0};
+  return {m0, m1, part: (m1 - m0 + 1) / nbMois};
+}
+/* Heures attendues en N d'après le parcours et les dates */
+function attendu2027(o, arr){
+  const total = arr === "planC" ? o.bdcHeures : o.hEnt;
+  const w = fenetre2027(o);
+  if (!isNum(total) || !w) return null;
+  return Math.round(total * w.part);
+}
+/* Recale le planning N sur les dates et les heures du parcours :
+   mois hors de la période vidés ; profil existant conservé et mis à l'échelle ; sinon répartition égale */
+function recaler(o, arr){
+  const total = arr === "planC" ? o.bdcHeures : o.hEnt;
+  const w = fenetre2027(o);
+  if (!isNum(total) || !w) return null;
+  const cible = total * w.part;
+  const dans = m => m >= w.m0 && m <= w.m1;
+  const cur = o[arr].map((x,m) => dans(m) && isNum(x) ? x : null);
+  const s = cur.reduce((t,x) => t + (isNum(x) ? x : 0), 0);
+  let prop;
+  if (s > 0) prop = cur.map(x => isNum(x) ? x * cible / s : null);
+  else { const n = w.m1 - w.m0 + 1; prop = Array.from({length:12}, (_,m) => dans(m) && n > 0 ? cible / n : null); }
+  const r = arrondirPlan(prop);
+  o[arr] = r.arr;
+  return r.total;
+}
+/* Répartit les heures du parcours sur les mois de N :
+   - si le planning a déjà des heures : mise à l'échelle proportionnelle (même profil mois par mois) ;
+   - sinon : part des mois de N dans la durée de la formation, répartie à parts égales. */
+function repartir(o, arr, ancien, nouveau){
+  const cur = o[arr];
+  const total = isNum(nouveau) ? nouveau : 0;
+  const somme12 = cur.reduce((t,x) => t + (isNum(x) ? x : 0), 0);
+  let cible;
+  if (somme12 > 0 && isNum(ancien) && ancien > 0) {
+    const f = total / ancien;
+    cible = cur.map(x => isNum(x) ? x * f : null);
+  } else if (somme12 > 0) {
+    return null; /* pas de référence pour une mise à l'échelle : on garde le planning saisi */
+  } else {
+    const d = parseDate(o.debut), fn = parseDate(o.fin);
+    if (!d || !fn || o.datesAPreciser || !total) return null;
+    const idx = x => x.y * 12 + x.m - 1;
+    const nbMois = idx(fn) - idx(d) + 1; if (nbMois <= 0) return null;
+    const m0 = Math.max(idx(d), YEAR*12), m1 = Math.min(idx(fn), YEAR*12 + 11);
+    if (m1 < m0) return null;
+    const part = total * (m1 - m0 + 1) / nbMois;
+    cible = Array.from({length:12}, (_,m) => (YEAR*12 + m >= m0 && YEAR*12 + m <= m1) ? part / (m1 - m0 + 1) : null);
+  }
+  const r = arrondirPlan(cible);
+  o[arr] = r.arr;
+  return r.total;
+}
+/* Saisie en direct : la time line se met à jour pendant la frappe (valeurs valides seulement) */
+let saveT;
+function onInput(e){
+  const el = e.target;
+  if (!el.dataset || !el.dataset.path) return;
+  const t = el.dataset.type;
+  if (!["text","number","date"].includes(t)) return;
+  const ref = getRef(el.dataset.path); if (!ref) return;
+  let v;
+  if (t === "number") {
+    if (el.value.trim()==="" && el.dataset.optional) v = null;
+    else { v = parseNumber(el.value); if (!isNum(v) || v < 0 || (ref.key==="absent" && v > 100)) return; }
+  } else if (t === "date") { v = el.value; if (v && !parseDate(v)) return; }
+  else v = el.value;
+  if (ref.obj[ref.key] === v) return;
+  if (!("orig" in el.dataset)) el.dataset.orig = JSON.stringify(ref.obj[ref.key] === undefined ? null : ref.obj[ref.key]);
+  ref.obj[ref.key] = v;
+  marquerPeriodes(el.dataset.path);
+  showMsg(el, "");
+  syncChamps(el, v);
+  if (["bdcStag","bdcHeures","bdcPrix"].includes(ref.key) && "montant" in ref.obj) majMontant(ref.obj);
+  if (t === "date") majAlertesDates(ref.obj, el.dataset.path);
+  refreshDerived();
+  clearTimeout(saveT); saveT = setTimeout(save, 400);
+}
+function enregistrer(){
+  const a = document.activeElement;
+  if (a && a.dataset && a.dataset.path) { a.dispatchEvent(new Event("change", {bubbles:true})); }
+  clearTimeout(saveT); save(); refreshDerived();
+  toast(storageOK ? "Modifications enregistrées · la time line est à jour" : "Enregistrement impossible dans ce navigateur : utilisez « Enregistrer une copie (.json) »");
+}
+/* Alerte uniquement sur les deux dates concernées, et effacée dès que l'ordre est correct */
+function majAlertesDates(o, path){
+  if (!o || !path) return;
+  const base = "f-" + path.split(".").slice(0, -1).join("-");
+  const paires = [["debut","fin","Attention : la date de fin est avant la date de début"], ["examDebut","examFin","Attention : la fin des épreuves est avant leur début"]];
+  paires.forEach(([d, f, msg]) => {
+    if (!(d in o) || !(f in o)) return;
+    const probleme = parseDate(o[d]) && parseDate(o[f]) && o[f] < o[d];
+    [d, f].forEach(k => {
+      const el = document.getElementById(base + "-" + k) || document.getElementById(base + "-" + k + "-z"); if (!el) return;
+      const m = document.getElementById(el.id + "-msg");
+      if (m) m.textContent = probleme ? msg : "";
+      el.setAttribute("aria-invalid", probleme ? "true" : "false");
+    });
+  });
+}
+/* met à jour les vues et les récapitulatifs sans reconstruire les champs */
+function refreshDerived(){
+  renderCA(); renderQF(); renderGlobal();
+  const S = state.sites[site]; if (!S) return;
+  const hint = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  const html = (id, t) => { const el = document.getElementById(id); if (el) el.innerHTML = t; };
+  /* liste de gauche */
+  document.querySelectorAll("#view-edit .ed-item[data-sel]").forEach(bt => {
+    const k = bt.dataset.sel, c = CATS[k[0]]; if (!c) return;
+    const o = S[c.list][Number(k.slice(1))]; if (!o) return;
+    const set = (r, t) => { const e = bt.querySelector(`[data-r="${r}"]`); if (e) e.textContent = t; };
+    set("nom", o.nom); set("sub", sousTitre(o, c.cat)); set("ca", resumeCarte(o, c.cat));
+  });
+  const x = selObjet(); if (!x || !x.o) return;
+  const {o, cat, list, i} = x, base = `${list}-${i}`;
+  const c = calcBrut(o, cat), k = coefMinore(o), neutre = estNeutre(o, cat);
+  hint("ed-nom", o.nom);
+  hint("ed-sub", sousTitre(o, cat) + (dureeTxt(o) ? " · " + dureeTxt(o) : ""));
+  hint("ed-ca", neutre ? "hors totaux" : eur(c.tot*k)); hint("ed-brut", neutre ? "" : "brut " + eur(c.tot)); hint("ed-deb", neutre ? "—" : eur(c.cur*k)); hint("ed-deb-brut", neutre ? "" : "brut " + eur(c.cur)); hint("ed-fin", neutre ? "—" : eur(c.prev*k)); hint("ed-fin-brut", neutre ? "" : "brut " + eur(c.prev));
+  html("pv-"+x.key, previewHTML(o, cat));
+  if (cat === "fpi") {
+    [["stagiaires","26"],["stagiaires27","27"]].forEach(([cle, z]) => {
+      o[cle].forEach((st,j) => { const r = caStagFPI(st); hint(`f-${base}-${cle}-${j}-mois`, r.mc ? r.mc.an + "/" + r.mc.total : "—"); hint(`f-${base}-${cle}-${j}-ca`, r.ok ? eur(r.ca) : "—"); });
+      html(`zi-${z}-res`, resultatFPI(o, z));
+    });
+    return;
+  }
+  hint(`f-${base}-mois2027-hint`, `D'après les dates : ${moisEn2027(o.debut,o.fin)} mois`);
+  hint(`f-${base}-dateRelance-hint`, o.methode === "bdc" ? "Début de la période bleue sur la time line" : `${moisRestants(o.dateRelance)} mois comptés jusqu'à décembre`);
+  hint(`f-${base}-projDate-hint`, `${moisRestants(o.projDate)} mois comptés jusqu'à décembre`);
+  hint(`f-${base}-absent-hint`, `CA fin ${YEAR} avec absentéisme : ${eur(c.tot * k)} (brut ${eur(c.tot)})`);
+  const nn = v => isNum(v) ? v : 0;
+  ["p1","p2"].forEach(pp => { if (o[pp]) { const ca = o.methode === "bdc" ? caHeures(o[pp]) : caCalcule(o[pp]); hint(`f-${base}-${pp}-tarif-hint`, `CA : ${eur(ca)} · avec absentéisme : ${eur(ca*k)}`); hint(`f-${base}-${pp}-caSaisi-hint`, `Calcul : ${eur(caCalcule(o[pp]))} · retenu : ${eur(caPeriode(o[pp]))}`); } });
+  { const theo = nn(o.bdcStag)*nn(o.bdcHeures)*nn(o.bdcPrix); hint(`f-${base}-bdcPrix-hint`, `Contrôle : ${eur(theo)} ${o.montant && Math.abs(theo-o.montant)>0.5 ? "≠ montant BDC "+eur(o.montant) : (o.montant ? "= montant BDC" : "")}`); }
+  (o.apprentis||[]).forEach((ap,j) => hint(`f-${base}-apprentis-${j}-mois`, String(moisEn2027(ap.debut, ap.fin))));
+  /* durées */
+  const d = dureesResume(o), tot = isNum(o.bdcHeures) && isNum(o.hEnt) ? o.bdcHeures + o.hEnt : null;
+  hint("dur-tot", tot !== null ? nb(tot)+" h" : "—");
+  hint("dur-rep", tot ? `${Math.round(o.bdcHeures/tot*100)} % en centre · ${Math.round(o.hEnt/tot*100)} % en entreprise` : "Renseignez les heures centre et entreprise");
+  html("plan-tc", `<b>${nb(d.c)} h</b>`); html("plan-te", `<b>${nb(d.e)} h</b>`);
+  html("plan-per", planPerTxt(d));
+  html("plan-tt", `<b>${nb(d.c+d.e)} h</b>`);
+  hint("plan-ecart", ecartTxt(o));
+  { const m = montantBDC(o); if (m !== null) hint("bdc-montant", eur(m)); }
+  if (parZones(o, cat)) {
+    html("za-cours-res", zoneApprResultat(o, "cours")); html("za-rentree-res", zoneApprResultat(o, "rentree"));
+    o.ap27.apprentis.forEach((ap,j) => hint(`f-${base}-ap27-apprentis-${j}-mois`, String(moisEn2027(ap.debut, ap.fin))));
+  }
+  if (unifie(o, cat)) { html("zu-cours-res", zoneUniResultat(o, cat, "cours")); html("zu-rentree-res", zoneUniResultat(o, cat, "rentree")); }
+  if (o.methode === "dates") {
+    html("z-cours-res", zoneResultat(o, "cours")); html("z-rentree-res", zoneResultat(o, "rentree"));
+    const a = sessionEnCours(o); if (a.calc) hint("z-cours-montant", eur(a.montant));
+    const r = o.r27, mr = montantSession(r.stag, r.heures, r.prix, r.montant); if (mr.calc) hint("z-rentree-montant", eur(mr.v));
+  }
+  if (o.y26) {
+    hint("ed-ca26", estNeutre(o,cat) ? "—" : eur(calc2026(o,cat).tot * coefMinore(o)));
+    html("ca26-txt", ca26Txt(o, cat));
+    const y = o.y26, tc = sommeAn(y.planC), te = sommeAn(y.planE);
+    html("p26-tc", `<b>${nb(tc)} h</b>`); html("p26-te", `<b>${nb(te)} h</b>`); html("p26-tt", `<b>${nb(tc+te)} h</b>`);
+    for (let m = 0; m < 12; m++) { const c = y.planC[m], e = y.planE[m]; hint("p26-m"+m, (isNum(c)||isNum(e)) ? nb((isNum(c)?c:0)+(isNum(e)?e:0)) : "—"); }
+    html("p26-per", `Centre ${YEAR-1} : <b>${nb(tc)} h</b> · entreprise ${YEAR-1} : <b>${nb(te)} h</b>`);
+    html("p26-bilan", bilanHeures(o));
+  }
+  { const av = document.getElementById("avis-vide"); if (av && !sansInfo(o, cat) && av.textContent) { av.textContent = ""; av.className = ""; av.removeAttribute("style"); } }
+  for (let m = 0; m < 12; m++) hint("plan-m"+m, totalMoisTxt(o, m));
+}
+
+/* ============ Boutons ============ */
+const armed = new WeakMap();
+function confirmer(btn, label, fn){
+  if (armed.get(btn)) { armed.delete(btn); fn(); return; }
+  const old = btn.textContent; btn.textContent = label; btn.classList.add("armed"); armed.set(btn, true);
+  setTimeout(() => { if (armed.get(btn)) { armed.delete(btn); btn.textContent = old; btn.classList.remove("armed"); } }, 4000);
+}
+function listFor(kind){ const S = state.sites[site]; return kind==="f" ? S.fondsPrives : S.apprentissage; }
+function onClick(e){
+  const it = e.target.closest("button.ed-item[data-sel]");
+  if (it) { sel = it.dataset.sel; renderEdit(); const m = document.querySelector("#view-edit .ed-main"); if (m && window.innerWidth < 900) m.scrollIntoView({block:"start"}); return; }
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const S = state.sites[site], i = Number(b.dataset.i), j = Number(b.dataset.j), kind = b.dataset.kind;
+  switch (b.dataset.act) {
+    case "add-action":
+      S.actions.push(normAction({nom:"Nouvelle action", lieu:nomEtab(site), debut:`${YEAR}-01-04`, fin:`${YEAR}-06-30`, mois2027:6, duree:6, methode:"dates", debut:"", fin:"", dateRelance:`${YEAR}-09-01`}));
+      save(); renderAll(); openCard("a"+(S.actions.length-1)); toast("Action ajoutée"); break;
+    case "add-appr":
+      S.apprentissage.push(normAppr({nom:"Nouvelle formation", projNb:6}));
+      save(); renderAll(); openCard("p"+(S.apprentissage.length-1)); toast("Formation ajoutée"); break;
+    case "add-fp":
+      S.fondsPrives.push(normFP({nom:"Nouvelle formation fonds privés", lieu:nomEtab(site), mode:"global", debut:`${YEAR}-01-04`, fin:`${YEAR}-06-30`, mois2027:6, duree:6, projNb:0}));
+      save(); renderAll(); openCard("f"+(S.fondsPrives.length-1)); toast("Formation fonds privés ajoutée"); break;
+    case "add-person": {
+      const f = listFor(kind)[i]; if (!f) break;
+      if (b.dataset.zone === "27") { f.ap27.apprentis.push({nom:"", contrat:"", debut: f.ap27.debut || `${YEAR}-09-01`, fin: "", pec: isNum(f.ap27.pec) ? f.ap27.pec : null}); save(); renderAll(); toast("Ligne ajoutée : complétez-la"); break; }
+      f.apprentis.push({nom:"", contrat:"", debut: kind==="f" ? (f.debut||`${YEAR}-01-04`) : `${YEAR-1}-09-01`, fin: kind==="f" ? (f.fin||`${YEAR}-06-30`) : `${YEAR}-07-31`, pec:isNum(f.projPec)?f.projPec:null});
+      save(); renderAll(); openCard(kind+i); toast("Ligne ajoutée : complétez-la"); break; }
+    case "del-person":
+      confirmer(b, "Confirmer ?", () => { const f = listFor(kind)[i]; if (f) (b.dataset.zone === "27" ? f.ap27.apprentis : f.apprentis).splice(j,1); save(); renderAll(); openCard(kind+i); toast("Ligne retirée"); }); break;
+    case "del-action":
+      confirmer(b, "Cliquez à nouveau pour supprimer", () => { S.actions.splice(i,1); sel = ""; save(); renderAll(); toast("Action supprimée"); }); break;
+    case "del-appr":
+      confirmer(b, "Cliquez à nouveau pour supprimer", () => { S.apprentissage.splice(i,1); sel = ""; save(); renderAll(); toast("Formation supprimée"); }); break;
+    case "compter-periodes": {
+      const x = selObjet(); if (!x || !x.o) break;
+      x.o.saisiPeriodes = true; save(); renderAll(); toast("Valeurs janv.-août / sept.-déc. comptées dans le CA"); break; }
+    case "add-fpi":
+      S.fondsPrivesInd.push(normFPI({nom:"Nouvelle formation fonds privés individuels", lieu:nomEtab(site)}));
+      save(); renderAll(); openCard("i"+(S.fondsPrivesInd.length-1)); toast("Formation fonds privés individuels ajoutée"); break;
+    case "add-stag-i": {
+      const f = S.fondsPrivesInd[i]; if (!f) break;
+      const z27 = b.dataset.zone === "27";
+      (z27 ? f.stagiaires27 : f.stagiaires).push(normStagFPI({debut: z27 ? `${YEAR}-09-01` : "", fin: ""}));
+      save(); renderAll(); toast("Ligne ajoutée : complétez-la"); break; }
+    case "del-stag-i":
+      confirmer(b, "Confirmer ?", () => { const f = S.fondsPrivesInd[i]; if (f) (b.dataset.zone === "27" ? f.stagiaires27 : f.stagiaires).splice(j,1); save(); renderAll(); toast("Ligne retirée"); }); break;
+    case "del-fpi":
+      confirmer(b, "Cliquez à nouveau pour supprimer", () => { S.fondsPrivesInd.splice(i,1); sel = ""; save(); renderAll(); toast("Formation supprimée"); }); break;
+    case "del-fp":
+      confirmer(b, "Cliquez à nouveau pour supprimer", () => { S.fondsPrives.splice(i,1); sel = ""; save(); renderAll(); toast("Formation supprimée"); }); break;
+    case "aff-brut": affichage = "brut"; save(); renderAll(); break;
+    case "aff-minore": affichage = "minore"; save(); renderAll(); break;
+    case "save-view": enregistrer(); setView("ca"); break;
+    case "copy-bdc": {
+      const ref = getRef(b.dataset.path + ".x"); const o = ref && ref.obj; if (!o) break;
+      ["p1","p2"].forEach(pp => { if (isNum(o.bdcStag)) o[pp].eff = o.bdcStag; if (isNum(o.bdcPrix)) o[pp].tarif = o.bdcPrix; });
+      save(); renderAll(); toast("Stagiaires et prix repris dans les 2 périodes"); break; }
+    case "report-26": {
+      const x = selObjet(); if (!x || !x.o) break;
+      const h = sommeAn(x.o.y26.planC);
+      if (h > 0) { x.o.y26.heures = h; save(); renderAll(); toast(`Heures centre ${YEAR-1} reportées dans le calcul : ` + nb(h) + " h"); }
+      else toast(`Aucune heure centre saisie dans le planning ${YEAR-1}`); break; }
+    case "copy-bdc-26": {
+      const x = selObjet(); if (!x || !x.o) break;
+      if (isNum(x.o.bdcStag)) x.o.y26.eff = x.o.bdcStag; if (isNum(x.o.bdcPrix)) x.o.y26.tarif = x.o.bdcPrix;
+      save(); renderAll(); toast(`Stagiaires et prix repris pour ${YEAR-1}`); break; }
+    case "recaler": {
+      const x = selObjet(); if (!x || !x.o) break;
+      const rc = recaler(x.o, "planC"), re = recaler(x.o, "planE");
+      save(); renderAll();
+      const parts = []; if (rc !== null) parts.push("centre " + nb(rc) + " h"); if (re !== null) parts.push("entreprise " + nb(re) + " h");
+      toast(parts.length ? `Planning ${YEAR} recalculé : ` + parts.join(" · ") : "Renseignez les dates et les heures du parcours"); break; }
+    case "report-heures": {
+      const x = selObjet(); if (!x || !x.o) break;
+      const d = dureesResume(x.o); const msgs = [];
+      if (d.c1 > 0) { x.o.p1.heures = d.c1; msgs.push("janv.-août : "+nb(d.c1)+" h"); }
+      if (d.c2 > 0) { x.o.p2.heures = d.c2; msgs.push("sept.-déc. : "+nb(d.c2)+" h"); }
+      save(); renderAll();
+      toast(msgs.length ? "Heures reportées dans le calcul · " + msgs.join(" · ") : `Aucune heure centre saisie dans le planning ${YEAR}`); break; }
+    case "export": exporter(); break;
+    case "import": document.getElementById("file-in").click(); break;
+    case "reset":
+      confirmer(b, "Cliquez à nouveau : toutes les formations de cet établissement seront effacées", () => { const n = state.sites[site].notesHors; state.sites[site] = siteVide(); sel = ""; save(); renderAll(); toast("Établissement vidé"); }); break;
+    case "go-intro": setView("intro"); break;
+  }
+}
+function openCard(key){ sel = key; renderEdit(); const m = document.querySelector("#view-edit .ed-main"); if (m) m.scrollIntoView({block:"start"}); }
+function exporter(){
+  try {
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+    const a = document.createElement("a");
+    const d = new Date();
+    a.href = URL.createObjectURL(blob);
+    a.download = `planning-ca-${YEAR}-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    toast("Copie enregistrée dans vos téléchargements");
+  } catch(e){ toast("Impossible d'enregistrer la copie"); }
+}
+function importer(file){
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      if (!valideStructure(d)) throw new Error("format");
+      state = migrer(normalise(d)); save(); renderAll(); toast("Copie ouverte");
+    } catch(e){ toast("Ce fichier n'est pas une copie valide du planning"); }
+  };
+  r.onerror = () => toast("Lecture du fichier impossible");
+  r.readAsText(file);
+}
+
+/* ============ Général ============ */
+let toastT;
+function toast(t){ const el=document.getElementById("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),2600); }
+let statusT;
+function setStatus(t, ok){ const el=document.getElementById("status"); el.textContent=t; el.className="status"+(ok?" ok":""); clearTimeout(statusT); if (ok) statusT=setTimeout(()=>{el.textContent="";},2500); }
+function renderAll(){
+  try {
+    if (!state.sites[site]) site = state.etabs.length ? state.etabs[0].id : "";
+    if (!site && view !== "intro" && view !== "global") view = "intro";
+    majEntete();
+    renderIntro(); renderCA(); renderQF(); renderEdit(); renderGlobal();
+    document.getElementById("errbox").hidden = true;
+  } catch(err){
+    const box = document.getElementById("errbox");
+    box.hidden = false;
+    box.textContent = "Un affichage n'a pas pu se faire. Vos données sont conservées ; utilisez « Enregistrer une copie » depuis l'accueil si besoin. (" + err.message + ")";
+  }
+  setViewButtons();
+}
+/* Barre du haut : titre, année et un bouton par établissement */
+function majEntete(){
+  document.title = "Planning et CA " + YEAR;
+  document.getElementById("brand-t").textContent = "Planning et CA " + YEAR;
+  document.getElementById("brand-sub").textContent = state.organisme.trim() || "Modèle vierge";
+  document.querySelectorAll("[data-annee]").forEach(el => el.textContent = YEAR);
+  const seg = document.getElementById("sites-seg");
+  seg.hidden = !state.etabs.length;
+  seg.innerHTML = state.etabs.map(e => `<button type="button" data-site="${esc(e.id)}" aria-pressed="${e.id === site}">${esc(nomEtab(e.id))}</button>`).join("");
+}
+function setViewButtons(){
+  document.querySelectorAll("#sites-seg [data-site]").forEach(bt => bt.setAttribute("aria-pressed", String(bt.dataset.site === site)));
+  const sans = !state.etabs.length;
+  ["intro","ca","qf","edit","global"].forEach(v => {
+    const bt = document.getElementById("v-"+v);
+    bt.setAttribute("aria-pressed", String(v===view));
+    if (v === "ca" || v === "qf" || v === "edit" || v === "global") bt.disabled = sans;
+    document.getElementById("view-"+v).hidden = v!==view;
+  });
+  document.body.classList.toggle("pg", view === "global");
+}
+function setSite(s){ site = s; sel = ""; if (view === "intro" || view === "global") view = "ca"; save(); renderAll(); window.scrollTo(0,0); }
+function setView(v){ view = v; save(); setViewButtons(); window.scrollTo(0,0); }
+
+/* ============ Page d'accueil : année, organisme et établissements ============ */
+function renderIntro(){
+  const el = document.getElementById("view-intro");
+  const nbForm = id => { const S = state.sites[id]; return S ? S.actions.length + S.apprentissage.length + S.fondsPrives.length + S.fondsPrivesInd.length : 0; };
+  const lignesE = state.etabs.map((e, i) => `<li class="et-row">
+      <span class="et-n">${i+1}</span>
+      <input type="text" class="et-in" id="et-in-${esc(e.id)}" aria-label="Nom de l'établissement ${i+1}" data-intro="nom" data-id="${esc(e.id)}" value="${esc(e.nom)}" placeholder="Nom de l'établissement">
+      <span class="et-s">${nbForm(e.id)} formation${nbForm(e.id)>1?"s":""}</span>
+      <span class="et-b">
+        <button type="button" class="btn small" data-act="et-up" data-id="${esc(e.id)}" ${i===0?"disabled":""} aria-label="Monter">↑</button>
+        <button type="button" class="btn small" data-act="et-down" data-id="${esc(e.id)}" ${i===state.etabs.length-1?"disabled":""} aria-label="Descendre">↓</button>
+        <button type="button" class="btn small" data-act="et-open" data-id="${esc(e.id)}">Ouvrir</button>
+        <button type="button" class="btn danger small" data-act="et-del" data-id="${esc(e.id)}">Supprimer</button>
+      </span></li>`).join("");
+  el.innerHTML = `
+  <div class="sheet intro">
+    <div class="eyebrow">Accueil · paramétrage</div>
+    <h1>Planning et CA — modèle vierge</h1>
+    <p class="lead">Saisissez l'année de travail et vos établissements. Chaque établissement dispose de ses propres pages (<b>Tableau CA</b>, <b>Qui finit quand</b>, <b>Modifier les données</b>) ; la page <b>CA global</b> les cumule.</p>
+
+    <div class="intro-grid">
+      <section class="sec">
+        <h3>1. Année de travail</h3>
+        <div class="yr-edit">
+          <button type="button" class="btn" data-act="an-moins" aria-label="Année précédente">−</button>
+          <input type="text" inputmode="numeric" id="in-annee" data-intro="annee" value="${YEAR}" aria-label="Année de travail" maxlength="4">
+          <button type="button" class="btn" data-act="an-plus" aria-label="Année suivante">+</button>
+        </div>
+        <div class="msg" id="in-annee-msg"></div>
+        <p class="sec-n">Les dates déjà saisies sont conservées : la time line, les libellés et tous les calculs se refont pour l'année choisie (ex. « CA ${YEAR} », « Rentrée ${YEAR} », « Hors ${YEAR} »).</p>
+      </section>
+      <section class="sec">
+        <h3>2. Organisme <span class="tiny">(facultatif)</span></h3>
+        <div class="f"><label for="in-org">Nom affiché en haut des pages et à l'impression</label>
+        <input type="text" id="in-org" data-intro="organisme" value="${esc(state.organisme)}" placeholder="ex. nom de votre organisme"></div>
+      </section>
+    </div>
+
+    <section class="sec" style="margin-top:14px">
+      <h3>3. Vos établissements</h3>
+      <p class="sec-n">Chaque établissement devient un onglet individuel dans la barre du haut. Le nom se modifie directement ici.</p>
+      ${state.etabs.length ? `<ol class="et-list">${lignesE}</ol>` : `<p class="tiny" style="margin:8px 0">Aucun établissement pour l'instant.</p>`}
+      <div class="et-add">
+        <input type="text" id="in-new-etab" placeholder="Nom du nouvel établissement" aria-label="Nom du nouvel établissement">
+        <button type="button" class="btn primary" data-act="et-add">+ Ajouter l'établissement</button>
+      </div>
+    </section>
+
+    <div class="intro-go">
+      <button type="button" class="btn save" data-act="intro-go" ${state.etabs.length?"":"disabled"}>Accéder au planning →</button>
+      <span class="tiny">${state.etabs.length ? "" : "Ajoutez au moins un établissement pour commencer."}</span>
+    </div>
+
+    <section class="sec" style="margin-top:14px">
+      <h3>Sauvegarde</h3>
+      <p class="sec-n">Les données sont enregistrées automatiquement dans ce navigateur. Pour les transférer ou les archiver, enregistrez une copie (.json).</p>
+      <div class="row-actions">
+        <button type="button" class="btn" data-act="export">Enregistrer une copie</button>
+        <button type="button" class="btn" data-act="import">Ouvrir une copie</button>
+        <button type="button" class="btn danger" data-act="tout-effacer">Tout effacer (repartir d'un modèle vierge)</button>
+      </div>
+    </section>
+  </div>`;
+}
+function ajouterEtab(){
+  const inp = document.getElementById("in-new-etab");
+  const nom = inp ? inp.value.trim() : "";
+  if (!nom) { if (inp) inp.focus(); toast("Saisissez le nom de l'établissement"); return; }
+  if (state.etabs.some(e => e.nom.trim().toLowerCase() === nom.toLowerCase())) { toast("Cet établissement existe déjà"); inp.select(); return; }
+  const id = nouvelId();
+  state.etabs.push({id, nom});
+  state.sites[id] = siteVide();
+  if (!site) site = id;
+  save(); renderAll();
+  const n = document.getElementById("in-new-etab"); if (n) n.focus();
+  toast("Établissement « " + nom + " » ajouté");
+}
+function changerAnnee(v){
+  const msg = document.getElementById("in-annee-msg");
+  if (!setAnnee(v)) { if (msg) msg.textContent = "Année attendue entre 2000 et 2100"; return; }
+  if (msg) msg.textContent = "";
+  state.annee = YEAR;
+  save();
+  /* re-rendu sans perdre le champ en cours de saisie */
+  const a = document.activeElement, id = a && a.id, val = a && "value" in a ? a.value : null;
+  renderAll();
+  if (id && id !== "in-annee") { const f = document.getElementById(id); if (f) { if (val !== null) f.value = val; f.focus(); } }
+  toast("Année de travail : " + YEAR);
+}
+function onIntroClick(e){
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const id = b.dataset.id, i = state.etabs.findIndex(x => x.id === id);
+  switch (b.dataset.act) {
+    case "et-add": ajouterEtab(); break;
+    case "an-moins": changerAnnee(YEAR - 1); break;
+    case "an-plus": changerAnnee(YEAR + 1); break;
+    case "intro-go": if (state.etabs.length) { if (!state.sites[site]) site = state.etabs[0].id; setView("ca"); renderAll(); } break;
+    case "et-open": site = id; sel = ""; view = "ca"; save(); renderAll(); window.scrollTo(0,0); break;
+    case "et-up": case "et-down": {
+      const j = b.dataset.act === "et-up" ? i - 1 : i + 1;
+      if (i < 0 || j < 0 || j >= state.etabs.length) break;
+      [state.etabs[i], state.etabs[j]] = [state.etabs[j], state.etabs[i]];
+      save(); renderAll(); break; }
+    case "et-del": {
+      const n = state.sites[id] ? lignes(state.sites[id]).length : 0;
+      confirmer(b, n ? `Confirmer : ${n} formation(s) effacée(s)` : "Confirmer ?", () => {
+        state.etabs = state.etabs.filter(x => x.id !== id); delete state.sites[id];
+        if (site === id) { site = state.etabs.length ? state.etabs[0].id : ""; sel = ""; }
+        save(); renderAll(); toast("Établissement supprimé"); });
+      break; }
+    case "tout-effacer":
+      confirmer(b, "Cliquez à nouveau : tout sera effacé", () => { const an = YEAR; state = donneesOrigine(); state.annee = an; site = ""; sel = ""; view = "intro"; save(); renderAll(); toast("Modèle vierge rétabli"); }); break;
+    default: return;
+  }
+  e.stopPropagation();
+}
+let introT;
+function onIntroInput(e){
+  const el = e.target, k = el.dataset && el.dataset.intro; if (!k) return;
+  if (k === "nom") { const et = state.etabs.find(x => x.id === el.dataset.id); if (!et) return; et.nom = el.value; }
+  else if (k === "organisme") state.organisme = el.value;
+  else return;
+  majEntete(); setViewButtons();
+  clearTimeout(introT); introT = setTimeout(() => { save(); renderQF(); renderCA(); renderGlobal(); }, 400);
+}
+function onIntroChange(e){
+  const el = e.target;
+  if (el.dataset && el.dataset.intro === "annee") changerAnnee(el.value.trim());
+  else if (el.dataset && el.dataset.intro) { clearTimeout(introT); save(); renderCA(); renderQF(); renderEdit(); renderGlobal(); }
+}
+const vIntro = document.getElementById("view-intro");
+vIntro.addEventListener("click", onIntroClick);
+vIntro.addEventListener("input", onIntroInput);
+vIntro.addEventListener("change", onIntroChange);
+vIntro.addEventListener("keydown", e => {
+  if (e.key !== "Enter") return;
+  if (e.target.id === "in-new-etab") { e.preventDefault(); ajouterEtab(); }
+  else if (e.target.id === "in-annee") { e.preventDefault(); changerAnnee(e.target.value.trim()); }
+});
+document.getElementById("sites-seg").addEventListener("click", e => { const bt = e.target.closest("[data-site]"); if (bt) setSite(bt.dataset.site); });
+document.getElementById("v-intro").addEventListener("click", () => { renderIntro(); setView("intro"); });
+document.getElementById("v-ca").addEventListener("click", () => setView("ca"));
+document.getElementById("v-qf").addEventListener("click", () => setView("qf"));
+document.getElementById("v-edit").addEventListener("click", () => setView("edit"));
+document.getElementById("v-global").addEventListener("click", () => { renderGlobal(); setView("global"); });
+document.getElementById("btn-print").addEventListener("click", () => { renderCA(); renderQF(); renderGlobal(); window.print(); });
+document.getElementById("view-edit").addEventListener("change", onChange);
+document.getElementById("view-edit").addEventListener("input", onInput);
+document.getElementById("btn-save").addEventListener("click", enregistrer);
+document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) { e.preventDefault(); enregistrer(); } });
+document.addEventListener("click", onClick);
+/* Fiabilité : enregistrement immédiat quand on quitte ou masque la page (pas de perte de la dernière frappe) */
+const flush = () => { if (!state) return; clearTimeout(saveT); try { localStorage.setItem(KEY, JSON.stringify(state)); localStorage.setItem(KEY+"-ui", JSON.stringify({v:5, site, view, affichage})); } catch(e) {} };
+window.addEventListener("pagehide", flush);
+window.addEventListener("beforeunload", flush);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
+/* Fiabilité : le planning ouvert dans un autre onglet reste synchronisé (sinon un onglet écraserait l'autre) */
+window.addEventListener("storage", e => {
+  if (e.key !== KEY || !e.newValue) return;
+  try { const d = JSON.parse(e.newValue); if (!valideStructure(d)) return; state = migrer(normalise(d)); renderAll(); toast("Données mises à jour depuis un autre onglet"); } catch(err) {}
+});
+document.getElementById("file-in").addEventListener("change", e => { const f=e.target.files && e.target.files[0]; if (f) importer(f); e.target.value=""; });
+
+state = donneesOrigine();
+load();
+if (!state.etabs.length) view = "intro";
+renderAll();
+if (!storageOK) setStatus("Enregistrement automatique indisponible : pensez à « Enregistrer une copie »", false);
+</script>
+</body>
+</html>
